@@ -20,16 +20,23 @@ public class WorkerScript : MonoBehaviour
      private Vector3 lastPosition;
      private GameObject ground;
      public float distanceFromTarget;
+     private bool facingLeft;
 
      private Random rnd;
      private int randomEventTime;
 
      private ArrayList spritesInitialRenderingOrder;
 
+     private bool weaponFired;
+     private bool huntingIsInProccess;
+     private bool successHunt;
+
 
      private void Awake()
      {
           movingSpeed = -1000f;
+
+          facingLeft = true;
 
           unitIsSelected = false;
 
@@ -68,9 +75,10 @@ public class WorkerScript : MonoBehaviour
           {
                spritesInitialRenderingOrder.Add(sprite.sortingOrder);
           }
-          //Debug.Log("Sprites count: " + spritesInitialRenderingOrder.Count);
-
           modifyRenderingOrder();
+
+          weaponFired = false;
+          successHunt = huntingIsInProccess = false;
      }
      
      public void modifyRenderingOrder()
@@ -124,13 +132,16 @@ public class WorkerScript : MonoBehaviour
           if (target == ground) pointToFace = targetClickPosition;
           else pointToFace = target.transform.position;
 
-          if (pointToFace.x - transform.position.x > 0)
+          
+          if (pointToFace.x - transform.position.x > 0) // Facing Right
           {
                this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+               facingLeft = false;
           }
-          else
+          else // Facing Left
           {
                this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+               facingLeft = true;
           }
      }
 
@@ -154,8 +165,8 @@ public class WorkerScript : MonoBehaviour
                distanceFromTarget = calculateDistance(this.gameObject, target);
                targetLayer = LayerMask.LayerToName(target.layer);
 
-
-               if(targetLayer.Equals("Ground"))
+               // Worker while target nothing
+               if (targetLayer.Equals("Ground"))
                {
                     if (movingSpeed > 0.1f) workerStatus = WorkerStatusType.MOVING;
                     else workerStatus = WorkerStatusType.IDLE;
@@ -163,6 +174,7 @@ public class WorkerScript : MonoBehaviour
                     //whatTheHellIHaveNoHead();
                }
 
+               // Worker while gathering resources
                if (targetLayer.Equals("Resources") && calculateDistance(this.gameObject, target) <= 0.75)
                {
                     agent.SetDestination(this.gameObject.transform.position);
@@ -182,29 +194,65 @@ public class WorkerScript : MonoBehaviour
                     }
                     target.GetComponent<ResourceScript>().addToResourceUserList(this.gameObject);
                }
-               if (targetLayer.Equals("Animals") && calculateDistance(this.gameObject, target) <= 3)
+
+               // Worker in hunting
+               if (targetLayer.Equals("Animals") && calculateDistance(this.gameObject, target) <= 3) 
                {
-                    
                     workerStatus = WorkerStatusType.HUNTING;
                     agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
                     target.GetComponent<AnimalScript>().stopMovement();    // Stopping the animal agent movement.
 
                     huntingTimer -= Time.deltaTime;
+                    
+                    if(!huntingIsInProccess) // Defining hunting success chance
+                    {
+                         huntingIsInProccess = true;
+                         int roll = rnd.Next(0, 101);
 
+                         Debug.Log("Animal has been engaged.");
+                         Debug.Log("Hunter rolled a " + roll + ".");
 
-                    if(huntingTimer <= 0)
+                         if (roll >= 50) successHunt = true;
+                         else successHunt = false;
+                    }
+                    
+                    if (huntingTimer <= 1 && !weaponFired) // Shooting projectile
+                    {
+                         weaponFired = true;
+                         Vector3 targetPosition = target.transform.position;
+                         
+
+                         GameObject newProjectile = Resources.Load("Arrow") as GameObject;
+                         newProjectile.GetComponent<ProjectileScript>().targetPos = targetPosition;
+
+                         if (successHunt) newProjectile.GetComponent<ProjectileScript>().missTarget = false;
+                         else newProjectile.GetComponent<ProjectileScript>().missTarget = true;
+
+                         GameObject projectileInstance = Instantiate(newProjectile, transform.position, Quaternion.identity);
+                         projectileInstance.name = "Arrow";
+                         projectileInstance.transform.SetParent(GameObject.Find("TemporaryObjects").GetComponent<Transform>());
+
+                    }
+                    else if(huntingTimer <= 0) // End of hunting action
                     {
                          huntingTimer = huntingTimerInitial;
-                         target = target.GetComponent<AnimalScript>().engageAnimal();
-                         if (target == null)      // On unsuccessful hunting
+                         
+                         if (successHunt)
                          {
-                              target = ground;
+                              Debug.Log("Animal hunt has SUCCEDED.");
+                              target = target.GetComponent<AnimalScript>().successHunt(true);
+                              agent.SetDestination(target.transform.position);
                          }
                          else
                          {
-                              agent.SetDestination(target.transform.position);
+                              Debug.Log("Animal hunt has FAILED.");
+                              target.GetComponent<AnimalScript>().successHunt(false);
+                              target = ground;
                          }
-                         
+
+                         successHunt = huntingIsInProccess = weaponFired = false;
+                         workerStatus = WorkerStatusType.IDLE;
+
                     }
                     
                }
@@ -302,4 +350,6 @@ public class WorkerScript : MonoBehaviour
      {
           return Vector3.Distance(from.transform.position, to.transform.position);
      }
+     
+
 }

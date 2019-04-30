@@ -86,7 +86,8 @@ public class GameMasterScript : MonoBehaviour
 
           foodConsumptionTimer = foodConsumptionTimerInitial = 10f;
           
-          animalSpawnTimer = 0f;
+          // First spawn of animal
+          animalSpawnTimer = 30f;
 
           // Building mode settings
           isBuildingModeOn = false;

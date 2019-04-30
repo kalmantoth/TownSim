@@ -2,26 +2,26 @@ fileFormatVersion: 2
 guid: 7338e5b9ddce11147ba9fc4350ae2b56
 ScriptedImporter:
   fileIDToRecycleName:
-    100000: PickAxe_GO/PickAxe_GO
-    100002: PickAxe_GO/PickAxe_GO/Axe
-    100006: PickAxe_GO/PickAxe_GO/BowStretched
-    100008: PickAxe_GO/PickAxe_GO/PickAxe
-    100010: PickAxe_GO/PickAxe_GO/BowLoose
-    400000: PickAxe_GO/PickAxe_GO/Transform
-    400002: PickAxe_GO/PickAxe_GO/Axe/Transform
-    400006: PickAxe_GO/PickAxe_GO/BowStretched/Transform
-    400008: PickAxe_GO/PickAxe_GO/PickAxe/Transform
-    400010: PickAxe_GO/PickAxe_GO/BowLoose/Transform
+    100004: BowStretched_GO/BowStretched_GO
+    100012: BowStretched_GO/BowStretched_GO/Axe
+    100014: BowStretched_GO/BowStretched_GO/BowLoose
+    100016: BowStretched_GO/BowStretched_GO/BowStretched
+    100018: BowStretched_GO/BowStretched_GO/PickAxe
+    400004: BowStretched_GO/BowStretched_GO/Transform
+    400012: BowStretched_GO/BowStretched_GO/Axe/Transform
+    400014: BowStretched_GO/BowStretched_GO/BowLoose/Transform
+    400016: BowStretched_GO/BowStretched_GO/BowStretched/Transform
+    400018: BowStretched_GO/BowStretched_GO/PickAxe/Transform
     2800000: tools
-    21200000: PickAxe_GO/PickAxe_GO/Axe/SpriteRenderer
-    21200004: PickAxe_GO/PickAxe_GO/BowStretched/SpriteRenderer
-    21200006: PickAxe_GO/PickAxe_GO/PickAxe/SpriteRenderer
-    21200008: PickAxe_GO/PickAxe_GO/BowLoose/SpriteRenderer
+    21200002: BowStretched_GO/BowStretched_GO/Axe/SpriteRenderer
+    21200010: BowStretched_GO/BowStretched_GO/BowLoose/SpriteRenderer
+    21200012: BowStretched_GO/BowStretched_GO/BowStretched/SpriteRenderer
+    21200014: BowStretched_GO/BowStretched_GO/PickAxe/SpriteRenderer
     21300000: BowStretched
     21300004: Axe
     21300006: PickAxe
     21300008: BowLoose
-    100100000: PickAxe_GO
+    100100002: BowStretched_GO
   externalObjects: {}
   userData: 
   assetBundleName: 
@@ -104,27 +104,6 @@ ScriptedImporter:
     uvTransform: {x: 0, y: 0}
   mosaicSpriteImportData: []
   rigSpriteImportData:
-  - name: BowStretched
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 4
-      width: 22
-      height: 35
-    spriteID: ec1222bd5c844d74dac9926f82a5c969
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    parentGroupIndex: -1
-    uvTransform: {x: 3, y: -24}
   - name: BowLoose
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -132,8 +111,8 @@ ScriptedImporter:
     border: {x: 0, y: 0, z: 0, w: 0}
     rect:
       serializedVersion: 2
-      x: 4
-      y: 79
+      x: 46
+      y: 4
       width: 8
       height: 35
     spriteID: 7d916dc6d4ff39b488ce7c7acc35e669
@@ -145,7 +124,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     parentGroupIndex: -1
-    uvTransform: {x: -48, y: 78}
+    uvTransform: {x: -6, y: 3}
   - name: Axe
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -153,7 +132,7 @@ ScriptedImporter:
     border: {x: 0, y: 0, z: 0, w: 0}
     rect:
       serializedVersion: 2
-      x: 20
+      x: 4
       y: 79
       width: 6
       height: 25
@@ -166,7 +145,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     parentGroupIndex: -1
-    uvTransform: {x: 8, y: 77}
+    uvTransform: {x: -8, y: 77}
   - name: PickAxe
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -188,6 +167,27 @@ ScriptedImporter:
     tessellationDetail: 0
     parentGroupIndex: -1
     uvTransform: {x: -41, y: 12}
+  - name: BowStretched
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 4
+      width: 34
+      height: 35
+    spriteID: b975ac87efb00474491beb93cbefcbbc
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    parentGroupIndex: -1
+    uvTransform: {x: 3, y: -24}
   platformSettings: []
   mosaicLayers: 1
   documentPivot: {x: 0, y: 0}
@@ -207,8 +207,8 @@ ScriptedImporter:
     spriteName: BowStretched
     isGroup: 0
     parentIndex: -1
-    spriteID: ec1222bd5c844d74dac9926f82a5c969
-    layerID: 6
+    spriteID: b975ac87efb00474491beb93cbefcbbc
+    layerID: 9
     mosaicPosition: {x: 4, y: 4}
   - name: BowLoose
     spriteName: BowLoose
@@ -216,14 +216,14 @@ ScriptedImporter:
     parentIndex: -1
     spriteID: 7d916dc6d4ff39b488ce7c7acc35e669
     layerID: 5
-    mosaicPosition: {x: 4, y: 79}
+    mosaicPosition: {x: 46, y: 4}
   - name: Axe
     spriteName: Axe
     isGroup: 0
     parentIndex: -1
     spriteID: cf066886bb06b744b810a9536f82208b
     layerID: 4
-    mosaicPosition: {x: 20, y: 79}
+    mosaicPosition: {x: 4, y: 79}
   - name: PickAxe
     spriteName: PickAxe
     isGroup: 0
