@@ -12,6 +12,7 @@ public enum ResourceType { WOOD, STONE, FOOD, GOLD};
 public enum WorkerStatusType { IDLE = 1, MOVING = 2 , WOOD_CHOPPING = 3, STONE_MINING = 4, FISHING = 5, FARMING = 6, CONSTRUCING = 7, GATHERING = 8, HUNTING = 9}
 public enum BuildingType { HOUSE, TOWNHALL, FARM,  MINE, LUMBERMILL, FISHERHUT, STOREHOUSE }
 public enum AnimalType { DEER }
+public enum Season { SPRING, SUMMER, AUTUMN, WINTER }
 
 
 public static class GlobVars
@@ -21,6 +22,7 @@ public static class GlobVars
      public static int ingameClock = 0;
      public static List<GameObject> workerList = new List<GameObject>();
      public static int selectedWorkerCount = 0;
+     public static Season season = Season.SUMMER;
 
 
 
@@ -49,10 +51,16 @@ public class GameMasterScript : MonoBehaviour
 
      public Text SupplyText;
      public Text GameDateText;
-     public Text DebugText;
+     public Text TownLevelText;
      public Text InfoPanelTargetDataText;
+     public Text GoalText;
      public Toggle EnableBuildingModeToggle;
      public Dropdown BuildingTypeDropdown;
+     public Button TownLevelUpButton;
+
+     public int initialResources;
+
+
      public int yearPassInMinutes;
 
      private DateTime gameTime;
@@ -70,6 +78,8 @@ public class GameMasterScript : MonoBehaviour
      private GameObject buildingGrid;
 
      private Random rnd;
+
+     private int townLevel;
      
 
 
@@ -77,10 +87,12 @@ public class GameMasterScript : MonoBehaviour
      void Start()
      {
           // Timer settings
-          gameTime = new DateTime(300, 5, 1);
-          yearPassInMinutes = 10;
-          dateIncreaseTimerInitial = yearPassInMinutes * 60 / 365;
+          gameTime = new DateTime(300, 6, 1);
+          dateIncreaseTimerInitial = (yearPassInMinutes * 60f)/365f;
+          Debug.Log(dateIncreaseTimerInitial);
           dateIncreaseTimer = dateIncreaseTimerInitial;
+
+          
 
           ingameClockInFloat = 0f;
 
@@ -96,6 +108,7 @@ public class GameMasterScript : MonoBehaviour
           // Default UI settings
           SupplyText.text = "SUPPLIES   Wood: " + GlobVars.WOOD + "   Stone: " + GlobVars.STONE;
           GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day;
+          TownLevelText.text = "Town level 0";
           InfoPanelTargetDataText.text = "";
           
           // CHEAT MODE - LOTS OF SUPPLIES
@@ -105,7 +118,15 @@ public class GameMasterScript : MonoBehaviour
 
           rnd = new Random();
 
+          townLevel = 0;
+          TownLevelUpButton.gameObject.SetActive(false);
+          TownLevelUpButton.onClick.AddListener(townLevelUp);
 
+
+          if (initialResources != 0)
+          {
+               GlobVars.WOOD = GlobVars.STONE = GlobVars.FOOD = GlobVars.GOLD = initialResources; 
+          }
 
      }
 
@@ -116,9 +137,12 @@ public class GameMasterScript : MonoBehaviour
      {
           
           updateIngameTime();
+          updateSeason();
           manageFoodConsumption();
           spawnAnimals();
-          
+          checkTownUpgradePossibility();
+
+
 
           if (!EventSystem.current.IsPointerOverGameObject())
           {
@@ -131,7 +155,25 @@ public class GameMasterScript : MonoBehaviour
 
      }
 
-     
+     public void checkTownUpgradePossibility()
+     {
+          if (GlobVars.WOOD >= 200 && GlobVars.STONE >= 200)
+          {
+               TownLevelUpButton.gameObject.SetActive(true);
+          }
+          
+     }
+
+
+     public void townLevelUp()
+     {
+          townLevel += 1;
+          GlobVars.WOOD -= 200;
+          GlobVars.STONE -= 200;
+          TownLevelUpButton.gameObject.SetActive(false);
+          GoalText.text = "GOAL: None.";
+     }
+
 
      private void spawnAnimals()
      {
@@ -289,7 +331,13 @@ public class GameMasterScript : MonoBehaviour
           }
      }
 
-     
+     private void updateSeason()
+     {
+          if (gameTime.Month >= 3 && gameTime.Month < 6) GlobVars.season = Season.SPRING;
+          else if (gameTime.Month >= 6 && gameTime.Month < 9) GlobVars.season = Season.SUMMER;
+          else if (gameTime.Month >= 9 && gameTime.Month < 12) GlobVars.season = Season.AUTUMN;
+          else GlobVars.season = Season.WINTER;
+     }
 
 
      private void manageFoodConsumption()
@@ -328,11 +376,13 @@ public class GameMasterScript : MonoBehaviour
           }
      }
 
+
+
      private void updateTopUIBar()
      {
-          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day + "      Passed Time: " + GlobVars.ingameClock + " sec";
+          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day + " (" + GlobVars.season + ") " + "      Passed Time: " + GlobVars.ingameClock + " sec";
           SupplyText.text = "Population: " + GlobVars.POPULATION + "    Wood: " + GlobVars.WOOD + "    Stone: " + GlobVars.STONE + "    Food: " + GlobVars.FOOD + "    Gold: " + GlobVars.GOLD;
-          DebugText.text = "";
+          TownLevelText.text = "Town level " + townLevel;
      }
 
      
