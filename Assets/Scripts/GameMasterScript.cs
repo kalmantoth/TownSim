@@ -24,6 +24,7 @@ public static class GlobVars
      public static List<GameObject> workerList = new List<GameObject>();
      public static int selectedWorkerCount = 0;
      public static Season season = Season.SUMMER;
+     public static bool firstDayOfSeason;
 
 
 
@@ -88,8 +89,8 @@ public class GameMasterScript : MonoBehaviour
      void Start()
      {
           // Timer settings
-          gameTime = new DateTime(300, 6, 1);
-          dateIncreaseTimerInitial = (yearPassInMinutes * 60f)/365f;
+          gameTime = new DateTime(300, 12, 1);
+          dateIncreaseTimerInitial = (yearPassInMinutes * 60f)/(365f);
           Debug.Log(dateIncreaseTimerInitial);
           dateIncreaseTimer = dateIncreaseTimerInitial;
 
@@ -323,32 +324,25 @@ public class GameMasterScript : MonoBehaviour
 
      private void changeGroundBySeason()
      {
+          GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = false;
+          GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = false;
+          GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = false;
+          GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = false;
+
           if (GlobVars.season == Season.SPRING)
           {
                GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = true;
-               GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = false;
-               GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = false;
-               GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = false;
           }
           else if (GlobVars.season == Season.SUMMER)
           {
-               GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = false;
                GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = true;
-               GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = false;
-               GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = false;
           }
           else if (GlobVars.season == Season.AUTUMN)
           {
-               GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = false;
-               GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = false;
                GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = true;
-               GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = false;
           }
           else if (GlobVars.season == Season.WINTER)
           {
-               GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = false;
-               GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = false;
-               GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = false;
                GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = true;
           }
      }
@@ -372,6 +366,18 @@ public class GameMasterScript : MonoBehaviour
           else if (gameTime.Month >= 6 && gameTime.Month < 9) GlobVars.season = Season.SUMMER;
           else if (gameTime.Month >= 9 && gameTime.Month < 12) GlobVars.season = Season.AUTUMN;
           else GlobVars.season = Season.WINTER;
+
+          if (gameTime.Month == 3 || gameTime.Month == 6 || gameTime.Month == 9 || gameTime.Month == 12){
+               if(gameTime.Day == 1)
+               {
+                    GlobVars.firstDayOfSeason = true;
+               }
+               else
+               {
+                    GlobVars.firstDayOfSeason = false;
+               }
+          }
+          
      }
 
 

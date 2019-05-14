@@ -68,7 +68,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: 6903f482d6aa52d4fad14891acfac775, type: 3}
+  m_Sprite: {fileID: 21300000, guid: bbc6b705183919440ba800e2842ffaa3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -125,7 +125,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 711ae930b46e8654fa0391342c662bf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resourceContainerName: Oak Tree
+  resourceContainerName: Oak tree
   resourceType: 0
   fullAmount: 200
   currentAmount: 200
@@ -140,7 +140,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 0.05, y: 0.05, z: 0.5}
+  m_Extents: {x: 0.375, y: 0.05, z: 0.5}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1
@@ -157,5 +157,5 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.5, y: 0.5, z: 1}
+  m_Size: {x: 1.51, y: 1.48, z: 1}
   m_Center: {x: 0, y: 0, z: 0}

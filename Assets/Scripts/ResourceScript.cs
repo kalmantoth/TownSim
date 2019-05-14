@@ -6,22 +6,23 @@ public class ResourceScript : MonoBehaviour
 {
      public string resourceContainerName;
      public ResourceType resourceType;
-     public int fullAmount =  200 , currentAmount =  200;
+     public int fullAmount, currentAmount;
      public List<GameObject> userList = new List<GameObject>();
      private Quaternion startingPosition;
 
      void Start()
      {
           // Setting render sorting order by finding gameobject's global position;
-          this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
+          //this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
 
-
+          /*
           if (!this.gameObject.GetComponent<AnimalScript>())
           {
                startingPosition = this.gameObject.transform.GetChild(0).gameObject.transform.rotation;   // Starting position of the Sprite (animation)
           }
-          
+          */
      }
+     
 
      void Update()
      {
@@ -35,72 +36,88 @@ public class ResourceScript : MonoBehaviour
                     }
                     else
                     {
+                         /*
                          destroyResourceGameObject();
                          break;
+                         */
                          
                     }
                }
-               //startProducingAnimation();
           }
           else
           {
-               //stopProducingAnimation();
           }
 
           changeSpriteBySeason();
+          changeResourceAmountBySeason();
+          modifyRenderingOrder();
      }
+
+     public void modifyRenderingOrder()
+     {
+          this.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(((this.gameObject.transform.position.y)*100)-25); // The number -50 is because the worker render's correct display
+          //25 = -(0.5*100-50)
+          //   25    50  -0 
+     }
+
 
      public void changeSpriteBySeason()
      {
-          if (this.resourceType == ResourceType.WOOD )
+          string seasonResourcePath = "seasons/" + GlobVars.season.ToString().ToLower() + "/";
+          string resource = "";
+
+          if (this.resourceContainerName.Equals("Oak tree"))
           {
-               if (GlobVars.season == Season.SPRING)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/spring/tree");
-               }
-               else if (GlobVars.season == Season.SUMMER)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/summer/tree"); 
-               }
-               else if (GlobVars.season == Season.AUTUMN)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/autumn/tree");
-               }
-               else if (GlobVars.season == Season.WINTER)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/winter/tree");
-               }
+               if(currentAmount != 0)   resource = "tree";
+               else resource = "tree_empty";
           }
-          else if (this.resourceType == ResourceType.FOOD)
+          else if (this.resourceContainerName.Equals("Raspberry bush"))
           {
-               if (GlobVars.season == Season.SPRING)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/spring/bush");
-               }
-               else if (GlobVars.season == Season.SUMMER)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/summer/bush");
-               }
-               else if (GlobVars.season == Season.AUTUMN)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/autumn/bush");
-               }
-               else if (GlobVars.season == Season.WINTER)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/winter/bush");
-               }
+               if (currentAmount != 0) resource = "bush";
+               else resource = "bush_empty";
           }
-          else if (this.resourceType == ResourceType.STONE)
+          else if (this.resourceContainerName.Equals("Rock"))
           {
-               if (GlobVars.season == Season.WINTER)
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/winter/rock");
-               }
-               else
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/summer/rock");
-               }
+               if (currentAmount != 0) resource = "rock";
+               else resource = "rock_empty";
           }
+
+          if (this.resourceContainerName.Equals("Oak tree") || this.resourceContainerName.Equals("Raspberry bush") || this.resourceContainerName.Equals("Rock"))
+          {
+               this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>(seasonResourcePath + resource);
+          }
+               
+
+     }
+     
+
+     public void changeResourceAmountBySeason()
+     {
+          if (this.resourceContainerName.Equals("Raspberry bush"))
+          {
+               if (GlobVars.firstDayOfSeason)
+               {
+                    if (GlobVars.season == Season.SPRING)
+                    {
+                         fullAmount = 25; 
+                    }
+                    if (GlobVars.season == Season.SUMMER)
+                    {
+                         fullAmount = 100;
+                    }
+                    if (GlobVars.season == Season.AUTUMN)
+                    {
+                         fullAmount = 50;
+                    }
+                    if (GlobVars.season == Season.WINTER)
+                    {
+                         fullAmount = 0;
+                    }
+                    currentAmount = fullAmount;
+               }
+               
+          }
+          
      }
 
 
@@ -146,17 +163,7 @@ public class ResourceScript : MonoBehaviour
                     break;
           }
      }
-
-     public void startProducingAnimation()
-     {
-          this.gameObject.transform.GetChild(0).gameObject.transform.RotateAround(this.gameObject.transform.GetChild(0).gameObject.transform.position, this.gameObject.transform.GetChild(0).gameObject.transform.forward, 5);
-     }
-
-     public void stopProducingAnimation()
-     {
-          // Set the Sprite to the starting position
-          this.gameObject.transform.GetChild(0).gameObject.transform.rotation = startingPosition;  
-     }
+     
 
      public void OnMouseDown()
      {

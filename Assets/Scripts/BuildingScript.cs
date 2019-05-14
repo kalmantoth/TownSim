@@ -24,11 +24,22 @@ public class BuildingScript : MonoBehaviour
           
      }
 
-     
+     public void changeSpriteBySeason()
+     {
+          string seasonResourcePath = "seasons/" + GlobVars.season.ToString().ToLower() + "/";
+          string building = "";
+
+          if (this.buildingName.Equals("House"))
+          {
+               building = "house";
+          }
+
+          this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>(seasonResourcePath + building);
+     }
 
      // Update is called once per frame
      void Update()
-    {
-          
+     {
+          changeSpriteBySeason();
      }
 }

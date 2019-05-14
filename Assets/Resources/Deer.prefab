@@ -49,9 +49,7 @@ MonoBehaviour:
   agent: {fileID: 4475991814141241196}
   animalType: 0
   animalName: Deer
-  isDead: 0
   isFleeing: 0
-  hunterList: []
 --- !u!195 &4475991814141241196
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -155,7 +153,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: 21300000, guid: 8e3fcd60c114ef44ab89051621f1b13d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 55544ec113a326740a3579a2e0ee0f4b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
