@@ -46,7 +46,63 @@ public class ResourceScript : MonoBehaviour
           {
                //stopProducingAnimation();
           }
+
+          changeSpriteBySeason();
      }
+
+     public void changeSpriteBySeason()
+     {
+          if (this.resourceType == ResourceType.WOOD )
+          {
+               if (GlobVars.season == Season.SPRING)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/spring/tree");
+               }
+               else if (GlobVars.season == Season.SUMMER)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/summer/tree"); 
+               }
+               else if (GlobVars.season == Season.AUTUMN)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/autumn/tree");
+               }
+               else if (GlobVars.season == Season.WINTER)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/winter/tree");
+               }
+          }
+          else if (this.resourceType == ResourceType.FOOD)
+          {
+               if (GlobVars.season == Season.SPRING)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/spring/bush");
+               }
+               else if (GlobVars.season == Season.SUMMER)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/summer/bush");
+               }
+               else if (GlobVars.season == Season.AUTUMN)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/autumn/bush");
+               }
+               else if (GlobVars.season == Season.WINTER)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/winter/bush");
+               }
+          }
+          else if (this.resourceType == ResourceType.STONE)
+          {
+               if (GlobVars.season == Season.WINTER)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/winter/rock");
+               }
+               else
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("seasons/summer/rock");
+               }
+          }
+     }
+
 
      public void addToResourceUserList(GameObject worker)
      {

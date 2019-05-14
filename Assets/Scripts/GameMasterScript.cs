@@ -6,6 +6,7 @@ using UnityEngine.AI;
 using UnityEngine.UI;
 using UnityEditor;
 using UnityEngine.EventSystems;
+using UnityEngine.Tilemaps;
 using Random = System.Random;
 
 public enum ResourceType { WOOD, STONE, FOOD, GOLD};
@@ -138,9 +139,11 @@ public class GameMasterScript : MonoBehaviour
           
           updateIngameTime();
           updateSeason();
+          changeGroundBySeason();
           manageFoodConsumption();
           spawnAnimals();
           checkTownUpgradePossibility();
+          
 
 
 
@@ -316,6 +319,38 @@ public class GameMasterScript : MonoBehaviour
           // Count workers to TOP UI
           GlobVars.POPULATION = GlobVars.workerList.Count;
 
+     }
+
+     private void changeGroundBySeason()
+     {
+          if (GlobVars.season == Season.SPRING)
+          {
+               GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = true;
+               GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = false;
+          }
+          else if (GlobVars.season == Season.SUMMER)
+          {
+               GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = true;
+               GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = false;
+          }
+          else if (GlobVars.season == Season.AUTUMN)
+          {
+               GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = true;
+               GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = false;
+          }
+          else if (GlobVars.season == Season.WINTER)
+          {
+               GameObject.Find("GroundSpring").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundSummer").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundAutumn").GetComponent<TilemapRenderer>().enabled = false;
+               GameObject.Find("GroundWinter").GetComponent<TilemapRenderer>().enabled = true;
+          }
      }
 
      private void updateIngameTime()
