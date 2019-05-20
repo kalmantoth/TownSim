@@ -28,21 +28,17 @@ public class ResourceScript : MonoBehaviour
      {
           if (userList.Count != 0)
           {
-               foreach (GameObject worker in userList)
-               {
                     if( currentAmount > 0)
                     {
-                         if (worker.GetComponent<WorkerScript>().gatherResource()) produceResource();
+                         foreach (GameObject worker in userList)
+                         {
+                              if (worker.GetComponent<WorkerScript>().gatherResource()) produceResource();
+                         }
                     }
                     else
                     {
-                         /*
                          destroyResourceGameObject();
-                         break;
-                         */
-                         
                     }
-               }
           }
           else
           {
@@ -131,6 +127,7 @@ public class ResourceScript : MonoBehaviour
      {
           userList.Remove(worker);
      }
+     
 
      public void destroyResourceGameObject()
      {
@@ -138,9 +135,10 @@ public class ResourceScript : MonoBehaviour
           {
                worker.GetComponent<WorkerScript>().setTargetToGround();
                worker.GetComponent<WorkerScript>().workerStatus = WorkerStatusType.IDLE;
-
-               Destroy(this.gameObject);
           }
+
+          userList.Clear();
+          if (resourceContainerName.Equals("Deer carcass")) Destroy(this.gameObject);
      }
 
      public void produceResource()
