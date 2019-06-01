@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 507, y: 474}
   m_MaxSize: {x: 14002, y: 14024}
   vertical: 0
-  controlID: 570
+  controlID: 126
 --- !u!114 &2
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -129,7 +129,7 @@ MonoBehaviour:
   m_MinSize: {x: 230, y: 474}
   m_MaxSize: {x: 10000, y: 14024}
   vertical: 1
-  controlID: 571
+  controlID: 73
 --- !u!114 &4
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -190,9 +190,9 @@ MonoBehaviour:
   m_isRotationLocked: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: -0.23322815, y: -0.31275392, z: 0.14082015}
+    m_Target: {x: -1.1733551, y: -0.22939894, z: 0.20599762}
     speed: 2
-    m_Value: {x: -0.23322815, y: -0.31275392, z: 0.14082015}
+    m_Value: {x: -1.1733551, y: -0.22939894, z: 0.20599762}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -224,9 +224,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 16.975506
+    m_Target: 10.454238
     speed: 2
-    m_Value: 16.975506
+    m_Value: 10.454238
   m_Ortho:
     m_Target: 1
     speed: 2
@@ -329,7 +329,7 @@ MonoBehaviour:
   m_PersistentViewDataDictionary: {fileID: 0}
   m_ResetOnNextRepaint: 0
   m_SelectedAssetPath: Assets/Textures/deercarcass.psd
-  m_SelectedSpriteRectGUID: 3f1c8b9e6beca274b9d7c6b66813b646
+  m_SelectedSpriteRectGUID: d1da80b81d7cf4d409885753980439a0
   m_LastUsedModuleTypeName: UnityEditor.Experimental.U2D.Animation.SkinningModule
 --- !u!114 &8
 MonoBehaviour:
@@ -409,9 +409,9 @@ MonoBehaviour:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 6e300000
-    m_LastClickedID: 12398
-    m_ExpandedIDs: 000000008c2900003c2d00004a2f00006e3000008a310000183800001a38000000ca9a3b
+    m_SelectedIDs: bc130000
+    m_LastClickedID: 5052
+    m_ExpandedIDs: 00000000d60c00008610000098120000bc130000d8140000103800001238000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -439,7 +439,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000008c2900003c2d00004a2f00006e3000008a310000183800001a38000000ca9a3b
+    m_ExpandedIDs: 00000000d60c00008610000098120000bc130000d81400001038000012380000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -464,8 +464,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: de2d0000
-    m_LastClickedInstanceID: 11742
+    m_SelectedInstanceIDs: 
+    m_LastClickedInstanceID: 0
     m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: c6230000b82e0000820b0000c81000008228000098280000000000002e860000be390000aa3d0000103800008829000026110000de2d0000
     m_RenameOverlay:
@@ -604,7 +604,7 @@ MonoBehaviour:
   m_MinSize: {x: 277, y: 298}
   m_MaxSize: {x: 4002, y: 8048}
   vertical: 1
-  controlID: 546
+  controlID: 127
 --- !u!114 &14
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -750,7 +750,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: a8fbffff
+      m_ExpandedIDs: cafbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 

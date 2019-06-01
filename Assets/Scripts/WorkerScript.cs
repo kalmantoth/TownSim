@@ -228,7 +228,9 @@ public class WorkerScript : MonoBehaviour
                          if (successHunt) newProjectile.GetComponent<ProjectileScript>().missTarget = false;
                          else newProjectile.GetComponent<ProjectileScript>().missTarget = true;
 
-                         GameObject projectileInstance = Instantiate(newProjectile, transform.position, Quaternion.identity);
+                         Transform bowTransform = transform.Find("PeasantMaleSprite/tools/BowStretched");
+
+                         GameObject projectileInstance = Instantiate(newProjectile, bowTransform.position, Quaternion.identity);
                          projectileInstance.name = "Arrow";
                          projectileInstance.transform.SetParent(GameObject.Find("TemporaryObjects").GetComponent<Transform>());
 
