@@ -89,7 +89,7 @@ public class GameMasterScript : MonoBehaviour
      void Start()
      {
           // Timer settings
-          gameTime = new DateTime(300, 12, 1);
+          gameTime = new DateTime(300, 6, 1);
           dateIncreaseTimerInitial = (yearPassInMinutes * 60f)/(365f);
           Debug.Log(dateIncreaseTimerInitial);
           dateIncreaseTimer = dateIncreaseTimerInitial;
@@ -294,7 +294,10 @@ public class GameMasterScript : MonoBehaviour
                          if (Physics.Raycast(ray, out hit))
                          {
                               Debug.Log("Hitted game object: " + hit.collider.gameObject.name);
-                              
+
+                              worker.GetComponent<WorkerScript>().agent.velocity = Vector3.zero; ;
+
+
                               worker.GetComponent<WorkerScript>().stopCurrentActivity();
 
                               worker.GetComponent<WorkerScript>().targetClickPosition = hit.point;

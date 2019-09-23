@@ -1,16 +1,33 @@
 fileFormatVersion: 2
 guid: 0953be7045e396e4ca34af5ee2256c6b
 ScriptedImporter:
-  fileIDToRecycleName:
-    100004: WorkerSelector_GO/WorkerSelector_GO
-    100006: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector
-    400004: WorkerSelector_GO/WorkerSelector_GO/Transform
-    400006: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/Transform
-    2800000: selector
-    21200002: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/SpriteRenderer
-    21300002: WorkerSelector
-    100100002: WorkerSelector_GO
+  internalIDToNameTable:
+  - first:
+      1: 100004
+    second: WorkerSelector_GO/WorkerSelector_GO
+  - first:
+      1: 100006
+    second: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector
+  - first:
+      4: 400004
+    second: WorkerSelector_GO/WorkerSelector_GO/Transform
+  - first:
+      4: 400006
+    second: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/Transform
+  - first:
+      28: 2800000
+    second: selector
+  - first:
+      212: 21200002
+    second: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/SpriteRenderer
+  - first:
+      213: 21300002
+    second: WorkerSelector
+  - first:
+      1001: 100100002
+    second: WorkerSelector_GO
   externalObjects: {}
+  serializedVersion: 2
   userData: 
   assetBundleName: 
   assetBundleVariant: 
@@ -81,6 +98,7 @@ ScriptedImporter:
       width: 0
       height: 0
     spriteID: 
+    internalID: 0
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -104,6 +122,7 @@ ScriptedImporter:
       width: 33
       height: 12
     spriteID: aa28c25002723cb49a224718723c97ed
+    internalID: 0
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -141,3 +160,5 @@ ScriptedImporter:
     dimension: {x: 0, y: 0}
   boneGOs: []
   generateGOHierarchy: 0
+  textureAssetName: selector
+  prefabAssetName: selector_GO

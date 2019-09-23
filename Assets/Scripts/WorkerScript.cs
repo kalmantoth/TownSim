@@ -49,7 +49,7 @@ public class WorkerScript : MonoBehaviour
           actionCooldown = actionCooldownInitial = 2f;
           huntingTimer = huntingTimerInitial = 5f;
 
-          animator = this.transform.Find("PeasantMaleSprite").GetComponent<Animator>();
+          animator = null;// this.transform.Find("PeasantMaleSprite").GetComponent<Animator>();
 
           lastPosition = this.transform.position;
           
@@ -57,10 +57,13 @@ public class WorkerScript : MonoBehaviour
           GlobVars.addToWorkerList(this.gameObject);
           workerStatus = WorkerStatusType.IDLE;
 
-          
+
+          //Rotating the Worker's sprite for the NavMeshAgent
+          transform.Find("Sprite").GetComponent<Transform>().Rotate(90, 0, 0);
+
           //Rotating the Worker's sprite for the NavMeshAgent
           //this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().Rotate(90,0,0);
-          Debug.Log(this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().ToString());
+          //Debug.Log(this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().ToString());
 
           Debug.Log("New Worker spawned.");
 
@@ -108,8 +111,8 @@ public class WorkerScript : MonoBehaviour
 
           
 
-          animator.SetInteger("WorkerStatus", (int)workerStatus);
-          animator.SetFloat("Speed", movingSpeed);
+          //animator.SetInteger("WorkerStatus", (int)workerStatus);
+          //animator.SetFloat("Speed", movingSpeed);
           
           setActivity();
           
@@ -135,12 +138,12 @@ public class WorkerScript : MonoBehaviour
           
           if (pointToFace.x - transform.position.x > 0) // Facing Right
           {
-               this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+               //this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
                facingLeft = false;
           }
           else // Facing Left
           {
-               this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+               //this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
                facingLeft = true;
           }
      }
@@ -175,7 +178,7 @@ public class WorkerScript : MonoBehaviour
                }
 
                // Worker while gathering resources
-               if (targetLayer.Equals("Resources") && calculateDistance(this.gameObject, target) <= 0.75)
+               if (targetLayer.Equals("Resources") && calculateDistance(this.gameObject, target) <= 5.75)
                {
                     agent.SetDestination(this.gameObject.transform.position);
                     switch (target.GetComponent<ResourceScript>().resourceType)
@@ -304,7 +307,7 @@ public class WorkerScript : MonoBehaviour
           unitIsSelected = true;
           GlobVars.selectedWorkerCount++;
           
-          transform.Find("PeasantMaleSprite/selector/WorkerSelector").GetComponent<SpriteRenderer>().enabled = true;
+          //transform.Find("PeasantMaleSprite/selector/WorkerSelector").GetComponent<SpriteRenderer>().enabled = true;
 
           Debug.Log("Unit Is Selected");
      }
@@ -314,7 +317,7 @@ public class WorkerScript : MonoBehaviour
           unitIsSelected = false;
           GlobVars.selectedWorkerCount--;
 
-          transform.Find("PeasantMaleSprite/selector/WorkerSelector").GetComponent<SpriteRenderer>().enabled = false;
+         // transform.Find("PeasantMaleSprite/selector/WorkerSelector").GetComponent<SpriteRenderer>().enabled = false;
      }
 
      public string ToString()
