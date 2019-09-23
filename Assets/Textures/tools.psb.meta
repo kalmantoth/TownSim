@@ -1,67 +1,7 @@
 fileFormatVersion: 2
-guid: 7338e5b9ddce11147ba9fc4350ae2b56
+guid: 12f65181010124c4abec6c85cf6cb0fb
 ScriptedImporter:
-  internalIDToNameTable:
-  - first:
-      1: 100004
-    second: BowStretched_GO/BowStretched_GO
-  - first:
-      1: 100012
-    second: BowStretched_GO/BowStretched_GO/Axe
-  - first:
-      1: 100014
-    second: BowStretched_GO/BowStretched_GO/BowLoose
-  - first:
-      1: 100016
-    second: BowStretched_GO/BowStretched_GO/BowStretched
-  - first:
-      1: 100018
-    second: BowStretched_GO/BowStretched_GO/PickAxe
-  - first:
-      4: 400004
-    second: BowStretched_GO/BowStretched_GO/Transform
-  - first:
-      4: 400012
-    second: BowStretched_GO/BowStretched_GO/Axe/Transform
-  - first:
-      4: 400014
-    second: BowStretched_GO/BowStretched_GO/BowLoose/Transform
-  - first:
-      4: 400016
-    second: BowStretched_GO/BowStretched_GO/BowStretched/Transform
-  - first:
-      4: 400018
-    second: BowStretched_GO/BowStretched_GO/PickAxe/Transform
-  - first:
-      28: 2800000
-    second: tools
-  - first:
-      212: 21200002
-    second: BowStretched_GO/BowStretched_GO/Axe/SpriteRenderer
-  - first:
-      212: 21200010
-    second: BowStretched_GO/BowStretched_GO/BowLoose/SpriteRenderer
-  - first:
-      212: 21200012
-    second: BowStretched_GO/BowStretched_GO/BowStretched/SpriteRenderer
-  - first:
-      212: 21200014
-    second: BowStretched_GO/BowStretched_GO/PickAxe/SpriteRenderer
-  - first:
-      213: 21300000
-    second: BowStretched
-  - first:
-      213: 21300004
-    second: Axe
-  - first:
-      213: 21300006
-    second: PickAxe
-  - first:
-      213: 21300008
-    second: BowLoose
-  - first:
-      1001: 100100002
-    second: BowStretched_GO
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 2
   userData: 
@@ -91,7 +31,7 @@ ScriptedImporter:
     spriteMeshType: 1
     alignment: 0
     spritePivot: {x: 0.5, y: 0.5}
-    spritePixelsToUnits: 64
+    spritePixelsToUnits: 100
     spriteBorder: {x: 0, y: 0, z: 0, w: 0}
     spriteGenerateFallbackPhysicsShape: 0
     generateCubemap: 6
@@ -102,7 +42,7 @@ ScriptedImporter:
     textureType: 8
     textureShape: 1
     singleChannelComponent: 0
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 0
@@ -146,6 +86,28 @@ ScriptedImporter:
     uvTransform: {x: 0, y: 0}
   mosaicSpriteImportData: []
   rigSpriteImportData:
+  - name: BowStretched
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 4
+      width: 34
+      height: 35
+    spriteID: 8ea50f4ff5e5f654a9cd5ed5bb8ca1a1
+    internalID: 0
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    parentGroupIndex: -1
+    uvTransform: {x: 3, y: -24}
   - name: BowLoose
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -157,7 +119,7 @@ ScriptedImporter:
       y: 4
       width: 8
       height: 35
-    spriteID: 7d916dc6d4ff39b488ce7c7acc35e669
+    spriteID: 17e8607d27e756246ac43f5bd0fec321
     internalID: 0
     spriteBone: []
     spriteOutline: []
@@ -179,7 +141,7 @@ ScriptedImporter:
       y: 79
       width: 6
       height: 25
-    spriteID: cf066886bb06b744b810a9536f82208b
+    spriteID: 770fca2c21074fd4b8849c33ad6d16a9
     internalID: 0
     spriteBone: []
     spriteOutline: []
@@ -201,7 +163,7 @@ ScriptedImporter:
       y: 47
       width: 18
       height: 24
-    spriteID: 455f30ea356a4054c98b2dc31e57f695
+    spriteID: 0e9001124d460e247a768e0111e702bb
     internalID: 0
     spriteBone: []
     spriteOutline: []
@@ -212,28 +174,6 @@ ScriptedImporter:
     tessellationDetail: 0
     parentGroupIndex: -1
     uvTransform: {x: -41, y: 12}
-  - name: BowStretched
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 4
-      width: 34
-      height: 35
-    spriteID: b975ac87efb00474491beb93cbefcbbc
-    internalID: 0
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    parentGroupIndex: -1
-    uvTransform: {x: 3, y: -24}
   platformSettings: []
   mosaicLayers: 1
   documentPivot: {x: 0, y: 0}
@@ -242,6 +182,9 @@ ScriptedImporter:
   importedTextureWidth: 64
   importedTextureHeight: 128
   documentSize: {x: 64, y: 64}
+  paperDollMode: 0
+  spriteCategoryList:
+    categories: []
   textureActualWidth: 64
   textureActualHeight: 128
   spritePackingTag: 
@@ -253,35 +196,37 @@ ScriptedImporter:
     spriteName: BowStretched
     isGroup: 0
     parentIndex: -1
-    spriteID: b975ac87efb00474491beb93cbefcbbc
+    spriteID: 8ea50f4ff5e5f654a9cd5ed5bb8ca1a1
     layerID: 9
     mosaicPosition: {x: 4, y: 4}
   - name: BowLoose
     spriteName: BowLoose
     isGroup: 0
     parentIndex: -1
-    spriteID: 7d916dc6d4ff39b488ce7c7acc35e669
+    spriteID: 17e8607d27e756246ac43f5bd0fec321
     layerID: 5
     mosaicPosition: {x: 46, y: 4}
   - name: Axe
     spriteName: Axe
     isGroup: 0
     parentIndex: -1
-    spriteID: cf066886bb06b744b810a9536f82208b
+    spriteID: 770fca2c21074fd4b8849c33ad6d16a9
     layerID: 4
     mosaicPosition: {x: 4, y: 79}
   - name: PickAxe
     spriteName: PickAxe
     isGroup: 0
     parentIndex: -1
-    spriteID: 455f30ea356a4054c98b2dc31e57f695
+    spriteID: 0e9001124d460e247a768e0111e702bb
     layerID: 3
     mosaicPosition: {x: 4, y: 47}
   characterData:
     bones: []
     parts: []
     dimension: {x: 0, y: 0}
+    characterGroups: []
   boneGOs: []
   generateGOHierarchy: 0
   textureAssetName: tools
   prefabAssetName: tools_GO
+  spriteLibAssetName: 

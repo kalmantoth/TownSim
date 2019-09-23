@@ -1,31 +1,7 @@
 fileFormatVersion: 2
-guid: 0953be7045e396e4ca34af5ee2256c6b
+guid: 724e9dd0b97d5a6459d89f5f4b085912
 ScriptedImporter:
-  internalIDToNameTable:
-  - first:
-      1: 100004
-    second: WorkerSelector_GO/WorkerSelector_GO
-  - first:
-      1: 100006
-    second: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector
-  - first:
-      4: 400004
-    second: WorkerSelector_GO/WorkerSelector_GO/Transform
-  - first:
-      4: 400006
-    second: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/Transform
-  - first:
-      28: 2800000
-    second: selector
-  - first:
-      212: 21200002
-    second: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/SpriteRenderer
-  - first:
-      213: 21300002
-    second: WorkerSelector
-  - first:
-      1001: 100100002
-    second: WorkerSelector_GO
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 2
   userData: 
@@ -55,7 +31,7 @@ ScriptedImporter:
     spriteMeshType: 1
     alignment: 0
     spritePivot: {x: 0.5, y: 0.5}
-    spritePixelsToUnits: 64
+    spritePixelsToUnits: 100
     spriteBorder: {x: 0, y: 0, z: 0, w: 0}
     spriteGenerateFallbackPhysicsShape: 0
     generateCubemap: 6
@@ -66,7 +42,7 @@ ScriptedImporter:
     textureType: 8
     textureShape: 1
     singleChannelComponent: 0
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 0
@@ -121,7 +97,7 @@ ScriptedImporter:
       y: 4
       width: 33
       height: 12
-    spriteID: aa28c25002723cb49a224718723c97ed
+    spriteID: ca88d2b528ed99a4288f2d690d4d0420
     internalID: 0
     spriteBone: []
     spriteOutline: []
@@ -140,6 +116,9 @@ ScriptedImporter:
   importedTextureWidth: 64
   importedTextureHeight: 32
   documentSize: {x: 64, y: 64}
+  paperDollMode: 0
+  spriteCategoryList:
+    categories: []
   textureActualWidth: 64
   textureActualHeight: 32
   spritePackingTag: 
@@ -151,14 +130,16 @@ ScriptedImporter:
     spriteName: WorkerSelector
     isGroup: 0
     parentIndex: -1
-    spriteID: aa28c25002723cb49a224718723c97ed
+    spriteID: ca88d2b528ed99a4288f2d690d4d0420
     layerID: 4
     mosaicPosition: {x: 4, y: 4}
   characterData:
     bones: []
     parts: []
     dimension: {x: 0, y: 0}
+    characterGroups: []
   boneGOs: []
   generateGOHierarchy: 0
   textureAssetName: selector
   prefabAssetName: selector_GO
+  spriteLibAssetName: 
