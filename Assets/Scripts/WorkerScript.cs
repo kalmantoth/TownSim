@@ -59,7 +59,7 @@ public class WorkerScript : MonoBehaviour
 
 
           //Rotating the Worker's sprite for the NavMeshAgent
-          transform.Find("Sprite").GetComponent<Transform>().Rotate(90, 0, 0);
+          transform.Find("worker_male").GetComponent<Transform>().Rotate(90, 0, 0);
 
           //Rotating the Worker's sprite for the NavMeshAgent
           //this.transform.Find("PeasantMaleSprite").GetComponent<Transform>().Rotate(90,0,0);
