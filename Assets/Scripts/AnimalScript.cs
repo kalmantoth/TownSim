@@ -11,17 +11,23 @@ public class AnimalScript : MonoBehaviour
      public AnimalType animalType;
      public string animalName;
      public bool isFleeing;
-     
+     private float movingSpeed;
+     private Vector3 lastPosition;
+
      private GameObject animalLeavingPoint;
      
      private Random rnd;
 
      private ArrayList spritesInitialRenderingOrder;
 
+
+
      private void Awake()
      {
+          lastPosition = this.transform.position;
+
           //Rotating the Worker's sprite for the NavMeshAgent
-          transform.Find("Sprite").GetComponent<Transform>().Rotate(90, 0, 0);
+          transform.Find("deer").GetComponent<Transform>().Rotate(90, 0, 0);
           
           isFleeing = false;
 
@@ -50,6 +56,12 @@ public class AnimalScript : MonoBehaviour
      // Update is called once per frame
      void Update()
      {
+          movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
+          lastPosition = transform.position;
+
+          this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
+
+
           if (calculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
           {
                Debug.Log("Animal has escaped.");
@@ -61,7 +73,31 @@ public class AnimalScript : MonoBehaviour
 
      private void LateUpdate()
      {
+          checkFacingSide();
           modifyRenderingOrder();
+     }
+
+     public void checkFacingSide()
+     {
+          if (isFleeing)
+          {
+               Vector3 pointToFace = new Vector3();
+               pointToFace = animalLeavingPoint.transform.position;
+
+               if (pointToFace.x - transform.position.x > 0) // Facing Right
+               {
+                    Debug.Log("Deer is facing right.");
+                    this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+               }
+               else // Facing Left
+               {
+                    Debug.Log("Deer is facing left.");
+                    this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+                    
+               }
+
+          }
+          
      }
 
      public GameObject createAnimalCarcass()
@@ -100,7 +136,7 @@ public class AnimalScript : MonoBehaviour
 
      public void modifyRenderingOrder()
      {
-
+          /* WIP
           int i = 0;
           // Setting render sorting order by finding gameobject's global position;
           foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer)))
@@ -109,6 +145,8 @@ public class AnimalScript : MonoBehaviour
                sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) + localRenderingOrderInSprite);
                i++;
           }
+
+           */
 
      }
 

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bf7c34a0dc4e6348bea04faa70406ee, type: 3}
+  m_Name: Worker_Body_Parts
+  m_EditorClassIdentifier: 
+  m_Labels:
+  - m_Name: Head
+    m_Hash: 130111906
+    m_CategoryList:
+    - m_Name: Head1
+      m_Hash: -1157370838
+      m_Sprite: {fileID: -5268492463469162345, guid: 0bd3f9cd92d671547973e502cd27a11b,
+        type: 3}
+    - m_Name: Head2
+      m_Hash: 571129232
+      m_Sprite: {fileID: 5267486694443618731, guid: 45c1af6fb19191a43812fb97ccbd6918,
+        type: 3}
+  - m_Name: Chest
+    m_Hash: 981834931
+    m_CategoryList:
+    - m_Name: Chest1
+      m_Hash: -779188195
+      m_Sprite: {fileID: -8422088557055400056, guid: 0bd3f9cd92d671547973e502cd27a11b,
+        type: 3}
+    - m_Name: Chest2
+      m_Hash: 1216862631
+      m_Sprite: {fileID: -4651917318637208196, guid: 45c1af6fb19191a43812fb97ccbd6918,
+        type: 3}
+  - m_Name: Right Arm
+    m_Hash: 747450821
+    m_CategoryList:
+    - m_Name: RightArm
+      m_Hash: 1806956327
+      m_Sprite: {fileID: 5063437837537665897, guid: f14d4bf71a5d14a419ff213edc20971d,
+        type: 3}
+  - m_Name: Left Arm
+    m_Hash: -285110375
+    m_CategoryList:
+    - m_Name: LeftArm
+      m_Hash: -343733542
+      m_Sprite: {fileID: -3700275771927311218, guid: 0bd3f9cd92d671547973e502cd27a11b,
+        type: 3}
+  - m_Name: Right Leg
+    m_Hash: -1056714978
+    m_CategoryList:
+    - m_Name: RightLeg
+      m_Hash: -2042820100
+      m_Sprite: {fileID: 3886739628199585665, guid: 0bd3f9cd92d671547973e502cd27a11b,
+        type: 3}
+  - m_Name: Left Leg
+    m_Hash: 42955074
+    m_CategoryList:
+    - m_Name: LeftLeg
+      m_Hash: 101577729
+      m_Sprite: {fileID: 8257516124668683076, guid: 0bd3f9cd92d671547973e502cd27a11b,
+        type: 3}
