@@ -8,38 +8,89 @@ public class BuildingScript : MonoBehaviour
      public string buildingName;
 
 
+     public Inventory inventory;
+     public int initWood;
+     public int initStone;
+
+     // Basic functions
+
      private void Awake()
      {
           // Setting render sorting order by finding gameobject's global position;
           this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
-
-          // Setting the TownHall Sprite's color 
-          if (this.buildingType == BuildingType.TOWNHALL) { transform.Find("Sprite").GetComponent<SpriteRenderer>().color = new Color(0.5f, 0.5f, 0.0f, 1.0f); }
-     }
-
-     // Start is called before the first frame update
-     void Start()
-    {
           
-          
-     }
 
-     public void changeSpriteBySeason()
-     {
-          string seasonResourcePath = "seasons/" + GlobVars.season.ToString().ToLower() + "/";
-          string building = "";
-
-          if (this.buildingName.Equals("House"))
+          if (buildingType == BuildingType.STORAGE)
           {
-               building = "house";
+               inventory = new Inventory(250);
+               inventory.ModifyInventory(ResourceType.WOOD, initWood);
+               inventory.ModifyInventory(ResourceType.STONE, initStone);
           }
 
-          this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>(seasonResourcePath + building);
+
      }
 
-     // Update is called once per frame
      void Update()
      {
-          changeSpriteBySeason();
+
+          if (GlobVars.ingameClockInFloat % 0.25f == 0)
+          {
+               
+          }
+
+          ChangeSpriteBySeason();
+
+
+
+     }
+
+     // ---------------- //
+     // ---------------- //
+     // ---------------- //
+
+     // Game Mechanic functions
+
+     public void OnMouseDown()
+     {
+          GlobVars.infoPanelGameObject = this.gameObject;
+     }
+
+     // ---------------- //
+     // ---------------- //
+     // ---------------- //
+
+     // Graphic modifying functions
+
+     public void ChangeSpriteBySeason()
+     {
+          string building = this.buildingType.ToString().ToLower();
+
+
+          if (GlobVars.season == Season.WINTER)
+          {
+               building += "_winter";
+          }
+
+          this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/" + building);
+
+
+     }
+
+
+
+     // ---------------- //
+     // ---------------- //
+     // ---------------- //
+
+     // String manipulation functions
+
+
+     public string ToString()
+     {
+          if (buildingType == BuildingType.STORAGE)    return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t inventory: " + inventory.ToStringNoZeroItems();
+          else return buildingName + "\n\tbuilding type: " + buildingType.ToString();
+
+
+
      }
 }

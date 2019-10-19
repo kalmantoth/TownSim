@@ -30,26 +30,27 @@ public class ResourceScript : MonoBehaviour
           {
                     if( currentAmount > 0)
                     {
-                         foreach (GameObject worker in userList)
-                         {
-                              if (worker.GetComponent<WorkerScript>().gatherResource()) produceResource();
-                         }
                     }
                     else
                     {
-                         destroyResourceGameObject();
+                         foreach (GameObject worker in userList)
+                         {
+                              worker.GetComponent<WorkerScript>().SetTargetToGround();
+                              RemoveFromResourceUserList(worker);
+                         }
+                         DestroyResourceGameObject();
                     }
           }
           else
           {
           }
 
-          changeSpriteBySeason();
-          changeResourceAmountBySeason();
-          modifyRenderingOrder();
+          ChangeSpriteBySeason();
+          ChangeResourceAmountBySeason();
+          ModifyRenderingOrder();
      }
 
-     public void modifyRenderingOrder()
+     public void ModifyRenderingOrder()
      {
           this.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(((this.gameObject.transform.position.y)*100)-25); // The number -50 is because the worker render's correct display
           //25 = -(0.5*100-50)
@@ -57,7 +58,7 @@ public class ResourceScript : MonoBehaviour
      }
 
 
-     public void changeSpriteBySeason()
+     public void ChangeSpriteBySeason()
      {
           string seasonResourcePath = "seasons/" + GlobVars.season.ToString().ToLower() + "/";
           string resource = "";
@@ -87,7 +88,7 @@ public class ResourceScript : MonoBehaviour
      }
      
 
-     public void changeResourceAmountBySeason()
+     public void ChangeResourceAmountBySeason()
      {
           if (this.resourceContainerName.Equals("Raspberry bush"))
           {
@@ -117,52 +118,48 @@ public class ResourceScript : MonoBehaviour
      }
 
 
-     public void addToResourceUserList(GameObject worker)
+     public bool ResourceAmountCanBeDecreased(int decreaseValue)
+     {
+          if(currentAmount - decreaseValue >= 0)
+          {
+               return true;
+          }
+          else
+          {
+               return false;
+          }
+     }
+
+     public void DecreaseCurrentResourceAmount(int decreaseValue)
+     {
+          currentAmount -= decreaseValue;
+     }
+
+
+     public void AddToResourceUserList(GameObject worker)
      {
           if(!userList.Contains(worker))
           userList.Add(worker);
      }
 
-     public void removeFromResourceUserList(GameObject worker)
+     public void RemoveFromResourceUserList(GameObject worker)
      {
           userList.Remove(worker);
      }
      
 
-     public void destroyResourceGameObject()
+     public void DestroyResourceGameObject()
      {
           foreach (GameObject worker in userList)
           {
-               worker.GetComponent<WorkerScript>().setTargetToGround();
+               worker.GetComponent<WorkerScript>().SetTargetToGround();
                worker.GetComponent<WorkerScript>().workerStatus = WorkerStatusType.IDLE;
           }
 
           userList.Clear();
           if (resourceContainerName.Equals("Deer carcass")) Destroy(this.gameObject);
      }
-
-     public void produceResource()
-     {
-          currentAmount--;
-
-          switch (resourceType)
-          {
-               case ResourceType.WOOD:
-                    GlobVars.WOOD++;
-                    break;
-               case ResourceType.STONE:
-                    GlobVars.STONE++;
-                    break;
-               case ResourceType.FOOD:
-                    if (resourceContainerName.Equals("Deer carcass")) GlobVars.FOOD+= 5;
-                    else GlobVars.FOOD++;
-                    break;
-               default:
-                    break;
-          }
-     }
      
-
      public void OnMouseDown()
      {
           GlobVars.infoPanelGameObject = this.gameObject;

@@ -4,9 +4,10 @@ using UnityEngine.Experimental.U2D.Animation;
 using Random = System.Random;
 using System.Collections;
 
+
 public class WorkerScript : MonoBehaviour
 {
-     
+
      public NavMeshAgent agent;
      public bool unitIsSelected;
      public Vector3 targetClickPosition;
@@ -36,16 +37,19 @@ public class WorkerScript : MonoBehaviour
      private int workerSpriteType;
      private string workerSpritePath;
 
+     private Inventory inventory;
 
+     private GameObject closestStorage;
+     private GameObject savedTarget;
 
-
+     
+     // Basic functions
 
      private void Awake()
      {
           workerSpritePath = ("SpriteContainer/WorkerBaseSprite");
 
           movingSpeed = -1000f;
-
           facingLeft = true;
 
           unitIsSelected = false;
@@ -62,9 +66,9 @@ public class WorkerScript : MonoBehaviour
 
 
           lastPosition = this.transform.position;
-          
 
-          GlobVars.addToWorkerList(this.gameObject);
+
+          GlobVars.AddWorkerToWorkerList(this.gameObject);
           workerStatus = WorkerStatusType.IDLE;
 
 
@@ -82,7 +86,7 @@ public class WorkerScript : MonoBehaviour
           // Random example code for future features with worker
           rnd = new Random();
           randomEventTime = rnd.Next(10, 30);
-          
+
 
 
           // Setting initial rendering order of the Worker's sprites
@@ -92,7 +96,7 @@ public class WorkerScript : MonoBehaviour
                spritesInitialRenderingOrder.Add(sprite.sortingOrder);
                //Debug.Log("Init sprite name in list:" + sprite.gameObject.ToString());
           }
-          modifyRenderingOrder();
+          ModifyRenderingOrder();
 
           weaponFired = false;
           successHunt = huntingIsInProccess = false;
@@ -100,12 +104,322 @@ public class WorkerScript : MonoBehaviour
           workerSpriteType = rnd.Next(1, 3);
           Debug.Log("worker type number: " + workerSpriteType);
 
-          changeWorkerSprite(workerSpriteType);
+          ChangeWorkerSprite(workerSpriteType);
+
+          inventory = new Inventory(10);
+          inventory.ModifyInventory(ResourceType.WOOD, 9);
+
           
+     }
+
+     void Update()
+     {
+
+          actionCooldown -= Time.deltaTime;
+
+          movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
+          lastPosition = transform.position;
+
+
+          // Animator update with the worker's current status and moving speed
+          this.GetComponent<Animator>().SetInteger("WorkerStatus", (int)workerStatus);
+          this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
+
+          // Reset action cooldown even on idle mode
+          if (actionCooldown <= -1f) actionCooldown = actionCooldownInitial;
+
+          HandleActivity();
+          LongIdleCheck();
+
+          if (GlobVars.ingameClockInFloat % 0.25f == 0)
+          { 
+               
+          }
 
      }
 
-     public void changeWorkerSprite (int typeNumber)
+     private void LateUpdate()
+     {
+          CheckFacingSide();
+          ModifyRenderingOrder();
+
+     }
+
+     // ---------------- //
+     // ---------------- //
+     // ---------------- //
+
+     // Game Mechanic functions
+
+
+     
+
+     
+
+     public void HandleActivity()
+     {
+          if (target != null)
+          {
+               distanceFromTarget = CalculateDistance(this.gameObject, target);
+               targetLayer = LayerMask.LayerToName(target.layer);
+               
+               
+               // Worker while target nothing and idle
+               if (targetLayer.Equals("Ground"))
+               {
+                    if (workerStatus != WorkerStatusType.IDLE && movingSpeed < 0.1f) workerStatus = WorkerStatusType.IDLE;
+               }
+               else if (target.GetComponent<BuildingScript>() != null && CalculateDistance(this.transform.Find("SpriteContainer/selector").gameObject, target) <= 3.5)
+               {
+                    if(workerStatus == WorkerStatusType.UNPACKING)
+                    {
+                         agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+                         this.inventory.TransferFullItemStackToInventory(closestStorage.GetComponent<BuildingScript>().inventory);
+                         SetTarget(savedTarget);
+                    }
+                    else if(target.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE)
+                    {
+                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory);
+                         SetTargetToGround();
+                    }
+                    
+                    
+               }
+               // Worker while collecting resources
+               else if (targetLayer.Equals("Resources") && CalculateDistance(this.transform.Find("SpriteContainer/selector").gameObject, target) <= 3.5f)
+               {
+                    if(workerStatus != WorkerStatusType.WOOD_CHOPPING || workerStatus != WorkerStatusType.STONE_MINING || workerStatus != WorkerStatusType.GATHERING) { 
+                         agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+                         target.GetComponent<ResourceScript>().AddToResourceUserList(this.gameObject); // Add the worker to the resource user list
+
+                         switch (target.GetComponent<ResourceScript>().resourceType)
+                         {
+                              case ResourceType.WOOD:
+                                   workerStatus = WorkerStatusType.WOOD_CHOPPING;
+                                   break;
+                              case ResourceType.STONE:
+                                   workerStatus = WorkerStatusType.STONE_MINING;
+                                   break;
+                              case ResourceType.FOOD:
+                                   workerStatus = WorkerStatusType.GATHERING;
+                                   break;
+                              default:
+                                   break;
+                         }
+                    }
+
+                    CollectResourceActivity();
+               }
+               // Worker in hunting
+               else if (targetLayer.Equals("Animals") && CalculateDistance(this.transform.Find("SpriteContainer/selector").gameObject, target) <= 15)
+               {
+                    if(workerStatus != WorkerStatusType.HUNTING)
+                    {
+                         agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+                         target.GetComponent<AnimalScript>().StopMovement();    // Stopping the animal agent movement.
+                         workerStatus = WorkerStatusType.HUNTING;
+                    }
+                    HuntActivity();
+               }
+
+          }
+     }
+     
+     public void UnloadInventory()
+     {
+          if(workerStatus != WorkerStatusType.UNPACKING) { 
+
+               float minDistance = float.MaxValue;
+               foreach (GameObject building in GlobVars.buildingList)
+               {
+                    if (building.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE)
+                    {
+                         if (CalculateDistance(this.gameObject, building) < minDistance)
+                         {
+                              minDistance = CalculateDistance(this.gameObject, building);
+                              closestStorage = building;
+                         }
+                    }
+               }
+
+               if (closestStorage == null)
+               {
+                    Debug.Log("No storage on the map.");
+                    SetTargetToGround();
+               }
+               else
+               {
+                    savedTarget = target;
+                    SetTarget(closestStorage, WorkerStatusType.UNPACKING);
+                    workerStatus = WorkerStatusType.UNPACKING;
+               }
+          }
+          
+     }
+
+     public void SetTarget(GameObject target, WorkerStatusType workerStatusType = WorkerStatusType.MOVING)
+     {
+          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+          HandlePreviousTarget();
+          this.previousTarget = this.target;
+          this.target = target;
+
+
+          if (target.GetComponent<GroundScript>() != null)  // If the target is ground then move to click position
+          {
+               agent.SetDestination(targetClickPosition);
+          }
+          else // Agent moves to the target
+          {
+               agent.SetDestination(target.gameObject.transform.position);
+          }
+
+          workerStatus = workerStatusType;
+
+
+     }
+
+     public void HandlePreviousTarget()
+     {
+          if (previousTarget != null)
+          {
+               if (previousTarget.GetComponent<ResourceScript>() != null)
+               {
+                    previousTarget.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
+               }
+               else if (previousTarget.GetComponent<AnimalScript>() != null)
+               {
+                    previousTarget.GetComponent<AnimalScript>().SetFleeing();
+               }
+          }
+     }
+
+     public void CollectResourceActivity()
+     {
+          int collectValue = 1;
+
+          if (actionCooldown <= 0.0f && target.GetComponent<ResourceScript>().ResourceAmountCanBeDecreased(collectValue))
+          {
+               actionCooldown = 2.0f;
+               if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().resourceType, collectValue) == false)
+               {
+                    target.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
+                    SetTargetToGround();
+               }
+               else
+               {
+                    target.GetComponent<ResourceScript>().DecreaseCurrentResourceAmount(collectValue);
+               }
+          }
+
+          if (inventory.IsThereFullItemStack())
+          {
+               UnloadInventory();
+          }
+     }
+
+     public void HuntActivity()
+     {
+          huntingTimer -= Time.deltaTime;
+
+          if (!huntingIsInProccess) // Defining hunting success chance
+          {
+               huntingIsInProccess = true;
+               int roll = rnd.Next(0, 101);
+
+               Debug.Log("Animal has been engaged.");
+               Debug.Log("Hunter rolled a " + roll + ".");
+
+               if (roll >= 110) successHunt = true;
+               else successHunt = false;
+          }
+
+          if (huntingTimer <= 0 && !weaponFired) // Shooting projectile
+          {
+               weaponFired = true;
+               Vector3 targetPosition = target.transform.position;
+
+
+               GameObject newProjectile = Resources.Load("Arrow") as GameObject;
+               newProjectile.GetComponent<ProjectileScript>().targetPos = targetPosition;
+
+               if (successHunt) newProjectile.GetComponent<ProjectileScript>().missTarget = false;
+               else newProjectile.GetComponent<ProjectileScript>().missTarget = true;
+
+               Transform bowTransform = transform.Find("SpriteContainer/tools/bow/bow_drawn");
+
+               GameObject projectileInstance = Instantiate(newProjectile, bowTransform.position, Quaternion.identity);
+               projectileInstance.name = "Arrow";
+               projectileInstance.transform.SetParent(GameObject.Find("TemporaryObjects").GetComponent<Transform>());
+
+          }
+          else if (huntingTimer <= 0) // End of hunting action
+          {
+               huntingTimer = huntingTimerInitial;
+
+               if (successHunt)
+               {
+                    Debug.Log("Animal hunt has SUCCEDED.");
+                    target = target.GetComponent<AnimalScript>().SuccessHunt(true);
+                    agent.SetDestination(target.transform.position);
+               }
+               else
+               {
+                    Debug.Log("Animal hunt has FAILED.");
+                    target.GetComponent<AnimalScript>().SuccessHunt(false);
+                    target = ground;
+               }
+
+               successHunt = huntingIsInProccess = weaponFired = false;
+               workerStatus = WorkerStatusType.IDLE;
+          }
+     }
+
+     public void SelectWorker()
+     {
+          unitIsSelected = true;
+          GlobVars.selectedWorkerCount++;
+
+          transform.Find("SpriteContainer/selector").gameObject.SetActive(true);
+
+          Debug.Log("Unit Is Selected");
+     }
+
+     public void UnselectWorker()
+     {
+          unitIsSelected = false;
+          GlobVars.selectedWorkerCount--;
+
+          transform.Find("SpriteContainer/selector").gameObject.SetActive(false);
+     }
+
+     public void SetTargetToGround()
+     {
+          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+          target = ground;
+     }
+
+     public void OnMouseDown()
+     {
+          if (!unitIsSelected)
+          {
+               SelectWorker();
+               GlobVars.infoPanelGameObject = this.gameObject;
+          }
+          else
+          {
+               UnselectWorker();
+          }
+     }
+
+     // ---------------- //
+     // ---------------- //
+     // ---------------- //
+
+     // Graphic modifying functions
+
+
+     public void ChangeWorkerSprite(int typeNumber)
      {
           // Changing the workers sprite from the gotten type number WIP 
           Debug.Log(this.transform.Find(workerSpritePath).transform.Find("Head").ToString());
@@ -115,52 +429,55 @@ public class WorkerScript : MonoBehaviour
                this.transform.Find(workerSpritePath).transform.Find("Chest").GetComponent<SpriteResolver>().SetCategoryAndLabel("Chest", "Chest2");
           }
      }
-     
-     public void modifyRenderingOrder()
+
+     public void ModifyRenderingOrder()
      {
 
           int i = 0;
           // Setting render sorting order by finding gameobject's global position;
           foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer)))
           {
-              
+
                int localRenderingOrderInSprite = -(int)spritesInitialRenderingOrder[i];
                sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) + localRenderingOrderInSprite);
                i++;
           }
-          
+
      }
 
 
-     void Update()
-    {
-          actionCooldown -= Time.deltaTime;
-          
+
+     public void CheckFacingSide()
+     {
+          if (target != null)
+          {
+               Vector3 pointToFace = new Vector3();
+               if (target == ground) pointToFace = targetClickPosition;
+               else pointToFace = target.transform.position;
 
 
+               if (pointToFace.x - transform.position.x > 0) // Facing Right
+               {
+                    this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+                    facingLeft = false;
+               }
+               else // Facing Left
+               {
+                    this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+                    facingLeft = true;
+               }
+          }
+     }
 
-          movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
-          lastPosition = transform.position;
-
-
-          // Animator update with the worker's current status and moving speed
-          this.GetComponent<Animator>().SetInteger("WorkerStatus", (int)workerStatus);
-          this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
-          
-          setActivity();
-          
-          // Reset cooldown even on idle mode
-          if (actionCooldown <= -1f)    actionCooldown = actionCooldownInitial;
-
-
-          // Idle Sitting animation occurs
+     public void LongIdleCheck()
+     {
           if (idleTimer == 0.0f && workerStatus == WorkerStatusType.IDLE)
           {
                idleTimerIsCounting = true;
           }
-          if(idleTimerIsCounting)
+          if (idleTimerIsCounting)
           {
-               if(idleTimer >= 30)
+               if (idleTimer >= 30)
                {
                     this.GetComponent<Animator>().SetBool("LongIdleTime", true);
                }
@@ -176,238 +493,40 @@ public class WorkerScript : MonoBehaviour
                     this.GetComponent<Animator>().SetBool("LongIdleTime", false);
                }
           }
-
-
-          
-
      }
-
-     private void LateUpdate()
-     {
-          checkFacingSide();
-          modifyRenderingOrder();
-
-
-     }
-     
-
-     public void checkFacingSide()
-     {
-          if (target != null) { 
-               Vector3 pointToFace = new Vector3();
-               if (target == ground) pointToFace = targetClickPosition;
-               else pointToFace = target.transform.position;
-
-          
-               if (pointToFace.x - transform.position.x > 0) // Facing Right
-               {
-                    this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
-                    facingLeft = false;
-               }
-               else // Facing Left
-               {
-                    this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
-                    facingLeft = true;
-               }
-          }
-     }
-
-     public void OnMouseDown()
-     {
-          if (!unitIsSelected)
-          {
-               selectWorker();
-               GlobVars.infoPanelGameObject = this.gameObject;
-          }
-          else
-          {
-               unselectWorker();
-          }
-     }
-
-     public void setActivity()
-     {
-          if (target != null) {
-
-               distanceFromTarget = calculateDistance(this.gameObject, target);
-               targetLayer = LayerMask.LayerToName(target.layer);
-
-               // Worker while target nothing
-               if (targetLayer.Equals("Ground"))
-               {
-                    if (movingSpeed > 0.1f) workerStatus = WorkerStatusType.MOVING;
-                    else workerStatus = WorkerStatusType.IDLE;
-                    
-               }
-
-               // Worker while gathering resources
-               if (targetLayer.Equals("Resources") && calculateDistance(this.transform.Find("SpriteContainer/selector").gameObject, target) <= 3.5)
-               {
-                    agent.SetDestination(this.gameObject.transform.position);
-                    switch (target.GetComponent<ResourceScript>().resourceType)
-                    {
-                         case ResourceType.WOOD:
-                              workerStatus = WorkerStatusType.WOOD_CHOPPING;
-                              break;
-                         case ResourceType.STONE:
-                              workerStatus = WorkerStatusType.STONE_MINING;
-                              break;
-                         case ResourceType.FOOD:
-                              workerStatus = WorkerStatusType.GATHERING;
-                              break;
-                         default:
-                              break;
-                    }
-                    target.GetComponent<ResourceScript>().addToResourceUserList(this.gameObject);
-               }
-
-               // Worker in hunting
-
-               if (targetLayer.Equals("Animals") && calculateDistance(this.transform.Find("SpriteContainer/selector").gameObject, target) <= 15) 
-               {
-                    workerStatus = WorkerStatusType.HUNTING;
-                    agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
-                    target.GetComponent<AnimalScript>().stopMovement();    // Stopping the animal agent movement.
-
-                    huntingTimer -= Time.deltaTime;
-                    
-                    if(!huntingIsInProccess) // Defining hunting success chance
-                    {
-                         huntingIsInProccess = true;
-                         int roll = rnd.Next(0, 101);
-
-                         Debug.Log("Animal has been engaged.");
-                         Debug.Log("Hunter rolled a " + roll + ".");
-
-                         if (roll >= 110) successHunt = true;
-                         else successHunt = false;
-                    }
-                    
-                    if (huntingTimer <= 0 && !weaponFired) // Shooting projectile
-                    {
-                         weaponFired = true;
-                         Vector3 targetPosition = target.transform.position;
-                         
-
-                         GameObject newProjectile = Resources.Load("Arrow") as GameObject;
-                         newProjectile.GetComponent<ProjectileScript>().targetPos = targetPosition;
-
-                         if (successHunt) newProjectile.GetComponent<ProjectileScript>().missTarget = false;
-                         else newProjectile.GetComponent<ProjectileScript>().missTarget = true;
-
-                         Transform bowTransform = transform.Find("SpriteContainer/tools/bow/bow_drawn");
-
-                         GameObject projectileInstance = Instantiate(newProjectile, bowTransform.position, Quaternion.identity);
-                         projectileInstance.name = "Arrow";
-                         projectileInstance.transform.SetParent(GameObject.Find("TemporaryObjects").GetComponent<Transform>());
-
-                    }
-                    else if(huntingTimer <= 0) // End of hunting action
-                    {
-                         huntingTimer = huntingTimerInitial;
-                         
-                         if (successHunt)
-                         {
-                              Debug.Log("Animal hunt has SUCCEDED.");
-                              target = target.GetComponent<AnimalScript>().successHunt(true);
-                              agent.SetDestination(target.transform.position);
-                         }
-                         else
-                         {
-                              Debug.Log("Animal hunt has FAILED.");
-                              target.GetComponent<AnimalScript>().successHunt(false);
-                              target = ground;
-                         }
-
-                         successHunt = huntingIsInProccess = weaponFired = false;
-                         workerStatus = WorkerStatusType.IDLE;
-
-                    }
-                    
-               }
-               
-          }
-     }
-
-
-     public void stopCurrentActivity()
-     {
-          workerStatus = WorkerStatusType.IDLE;
-
-          if (target.GetComponent<ResourceScript>() != null)
-          {
-               target.GetComponent<ResourceScript>().removeFromResourceUserList(this.gameObject);
-          }
-          if (target.GetComponent<AnimalScript>() != null)
-          {
-               target.GetComponent<AnimalScript>().setFleeing();
-          }
-     }
-
 
      
 
-     public bool gatherResource()
-     {
-          if (actionCooldown <= 0.0f)
-          {
-               actionCooldown = 2.0f;
-               return true;
-          }
-          else return false;
-     }
+     // ---------------- //
+     // ---------------- //
+     // ---------------- //
 
-
-     public void selectWorker()
-     {
-          unitIsSelected = true;
-          GlobVars.selectedWorkerCount++;
-
-          transform.Find("SpriteContainer/selector").gameObject.SetActive(true);
-
-          Debug.Log("Unit Is Selected");
-     }
-
-     public void unselectWorker()
-     {
-          unitIsSelected = false;
-          GlobVars.selectedWorkerCount--;
-
-          transform.Find("SpriteContainer/selector").gameObject.SetActive(false);
-     }
+     // String manipulation functions
 
      public string ToString()
      {
+
+          string workerString = "Worker" + "\n\t is selected: " + unitIsSelected.ToString() + "\n\t status: " + workerStatus.ToString() + "\n\t inventory: " + inventory.ToStringNoZeroItems();
+
           if(targetLayer.Equals("Ground")) {
-               return "Worker\n\tis selected: " + unitIsSelected.ToString() + "\n\tstatus: " + workerStatus.ToString() + "\n\ttarget: None";
+               workerString += "\n\t target: None";
           }
           else
           {
-               return "Worker\n\tis selected: " + unitIsSelected.ToString() + "\n\tstatus: " + workerStatus.ToString() + "\n\ttarget: " + this.target.name;
+               workerString += "\n\t target: " + this.target.name;
           }
 
-          //Debug
-          /*
-          if (targetLayer.Equals("Ground"))
-          {
-               return "Worker\n\tis selected: " + unitIsSelected.ToString() + "\n\tstatus: " + workerStatus.ToString() + "\n\ttarget: None" + "\n\tmoving speed: " + movingSpeed;
-          }
-          else
-          {
-               return "Worker\n\tis selected: " + unitIsSelected.ToString() + "\n\tstatus: " + workerStatus.ToString() + "\n\ttarget: " + this.target.name + " distance: " + distanceFromTarget + "\n\tmoving speed: " + movingSpeed;
-          }
-          */
+          return workerString;
+          
      }
 
-     public void setTargetToGround()
-     {
-          target = ground;
-     }
+     // ---------------- //
+     // ---------------- //
+     // ---------------- //
 
-     
+     // Assist functions
 
-
-     private float calculateDistance(GameObject from, GameObject to)
+     private float CalculateDistance(GameObject from, GameObject to)
      {
           return Vector3.Distance(from.transform.position, to.transform.position);
      }

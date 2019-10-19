@@ -6,7 +6,7 @@ public class GridScript : MonoBehaviour
 {
 
      [SerializeField]
-     private float size = 1f;
+     private float size = 10f;
 
      public Vector3 GetNearestPointOnGrid(Vector3 position)
      {
@@ -29,9 +29,9 @@ public class GridScript : MonoBehaviour
      private void OnDrawGizmos()
      {
           Gizmos.color = Color.yellow;
-          for (float x = -20; x < 20; x += size)
+          for (float x = -20; x < 20; x += size*2)
           {
-               for (float y = -20; y < 20; y += size)
+               for (float y = -20; y < 20; y += size*2)
                {
                     var point = GetNearestPointOnGrid(new Vector3(x, y, 0f));
                     Gizmos.DrawSphere(point, 0.1f);

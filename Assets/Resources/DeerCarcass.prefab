@@ -47,7 +47,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resourceContainerName: Deer carcass
-  resourceType: 2
+  resourceType: 4
   fullAmount: 10
   currentAmount: 10
   userList: []

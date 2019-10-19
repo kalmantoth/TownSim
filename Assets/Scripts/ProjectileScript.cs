@@ -24,7 +24,7 @@ public class ProjectileScript : MonoBehaviour
           rb = this.gameObject.GetComponent<Rigidbody2D>();
 
 
-          if (missTarget) offsetTarget();
+          if (missTarget) OffsetTarget();
           
 
           moveDirection = targetPos - this.gameObject.transform.position;
@@ -36,7 +36,7 @@ public class ProjectileScript : MonoBehaviour
           
      }
      
-     public void offsetTarget() // Offseting the projectile target position
+     public void OffsetTarget() // Offseting the projectile target position
      {
 
           float minX = GetRandomFloatNumber(-1.5, -1);
@@ -60,10 +60,10 @@ public class ProjectileScript : MonoBehaviour
           rb.AddForce(v2 * speed);
 
 
-          checkProjectileStatus();
+          CheckProjectileStatus();
      }
 
-     private void checkProjectileStatus() // Determinate the projectile life-span
+     private void CheckProjectileStatus() // Determinate the projectile life-span
      {
           float arrowDestinationLength = 1;
 

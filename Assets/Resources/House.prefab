@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6641119992660562691}
   - component: {fileID: 8546241005522675417}
   - component: {fileID: 3517275735663381940}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: House
   m_TagString: Object
   m_Icon: {fileID: 0}
@@ -87,7 +87,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5421224907901605674}
   - component: {fileID: 2699253490808723205}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,6 +133,7 @@ SpriteRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -145,7 +146,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: 7e531c9008eb665469745a23fd88733a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5f8bbe1dffea44c4988fc9bb0ed24fc7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

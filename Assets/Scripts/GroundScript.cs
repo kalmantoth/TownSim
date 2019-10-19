@@ -19,7 +19,7 @@ public class GroundScript : MonoBehaviour
      public void OnMouseDown()
      {
 
-          GlobVars.unselectedWorkers();
+          GlobVars.UnselectWorkers();
           GlobVars.infoPanelGameObject = this.gameObject;
           
      }

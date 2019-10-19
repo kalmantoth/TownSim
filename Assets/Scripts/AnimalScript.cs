@@ -41,7 +41,7 @@ public class AnimalScript : MonoBehaviour
           {
                spritesInitialRenderingOrder.Add(sprite.sortingOrder);
           }
-          modifyRenderingOrder();
+          ModifyRenderingOrder();
 
 
      }
@@ -62,7 +62,7 @@ public class AnimalScript : MonoBehaviour
           this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
 
 
-          if (calculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
+          if (CalculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
           {
                Debug.Log("Animal has escaped.");
                Destroy(this.gameObject);
@@ -73,11 +73,11 @@ public class AnimalScript : MonoBehaviour
 
      private void LateUpdate()
      {
-          checkFacingSide();
-          modifyRenderingOrder();
+          CheckFacingSide();
+          ModifyRenderingOrder();
      }
 
-     public void checkFacingSide()
+     public void CheckFacingSide()
      {
           if (isFleeing)
           {
@@ -100,7 +100,7 @@ public class AnimalScript : MonoBehaviour
           
      }
 
-     public GameObject createAnimalCarcass()
+     public GameObject CreateAnimalCarcass()
      {
 
           GameObject deerCarcass = Instantiate(Resources.Load("DeerCarcass"), this.transform.position, Quaternion.identity) as GameObject;
@@ -113,28 +113,28 @@ public class AnimalScript : MonoBehaviour
           return deerCarcass;
      }
      
-     public void stopMovement()
+     public void StopMovement()
      {
           agent.SetDestination(this.gameObject.transform.position);
      }
 
-     public GameObject successHunt(bool successOfHunting)
+     public GameObject SuccessHunt(bool successOfHunting)
      {
           
           if (successOfHunting)
           {
-               return createAnimalCarcass();
+               return CreateAnimalCarcass();
           }
           else
           {
-               setFleeing();
+               SetFleeing();
                return null;
           }
           
 
      }
 
-     public void modifyRenderingOrder()
+     public void ModifyRenderingOrder()
      {
           /* WIP
           int i = 0;
@@ -151,7 +151,7 @@ public class AnimalScript : MonoBehaviour
      }
 
 
-     public void setFleeing()
+     public void SetFleeing()
      {
           isFleeing = true;
           agent.SetDestination(animalLeavingPoint.transform.position);
@@ -168,7 +168,7 @@ public class AnimalScript : MonoBehaviour
      }
 
 
-     private float calculateDistance(GameObject from, GameObject to)
+     private float CalculateDistance(GameObject from, GameObject to)
      {
           return Vector3.Distance(from.transform.position, to.transform.position);
      }
