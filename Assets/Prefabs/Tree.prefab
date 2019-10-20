@@ -175,7 +175,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resourceContainerName: Oak tree
-  resourceType: 0
+  resourceType: 1
+  foodType: 0
   fullAmount: 200
   currentAmount: 200
   userList: []

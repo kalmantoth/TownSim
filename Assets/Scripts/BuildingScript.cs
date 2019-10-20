@@ -9,22 +9,35 @@ public class BuildingScript : MonoBehaviour
 
 
      public Inventory inventory;
-     public int initWood;
-     public int initStone;
+
+     private float actionCooldownInitial;
+     private float actionCooldown;
 
      // Basic functions
 
      private void Awake()
      {
+          
+          actionCooldown = actionCooldownInitial = 2f;
+          actionCooldown -= Time.deltaTime;
+          // Reset action cooldown even on idle mode
+          if (actionCooldown <= -1f) actionCooldown = actionCooldownInitial;
+          if (actionCooldown <= 0.0f) //doinsomething
+
+
           // Setting render sorting order by finding gameobject's global position;
-          this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
+               this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
           
 
           if (buildingType == BuildingType.STORAGE)
           {
-               inventory = new Inventory(250);
-               inventory.ModifyInventory(ResourceType.WOOD, initWood);
-               inventory.ModifyInventory(ResourceType.STONE, initStone);
+               inventory = new Inventory(250,InventoryType.RESOURCE);
+          }
+
+          if (buildingType == BuildingType.GRANARY)
+          {
+               inventory = new Inventory(100,InventoryType.FOOD);
+
           }
 
 
@@ -66,7 +79,7 @@ public class BuildingScript : MonoBehaviour
           string building = this.buildingType.ToString().ToLower();
 
 
-          if (GlobVars.season == Season.WINTER)
+          if (GlobVars.season == Season.WINTER && !building.Equals("campfire"))
           {
                building += "_winter";
           }
@@ -88,6 +101,7 @@ public class BuildingScript : MonoBehaviour
      public string ToString()
      {
           if (buildingType == BuildingType.STORAGE)    return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t inventory: " + inventory.ToStringNoZeroItems();
+          else if (buildingType == BuildingType.GRANARY) return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t inventory: " + inventory.ToStringNoZeroItems();
           else return buildingName + "\n\tbuilding type: " + buildingType.ToString();
 
 

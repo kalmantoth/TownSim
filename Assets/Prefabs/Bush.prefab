@@ -174,7 +174,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resourceContainerName: Raspberry bush
-  resourceType: 4
+  resourceType: 0
+  foodType: 1
   fullAmount: 100
   currentAmount: 100
   userList: []

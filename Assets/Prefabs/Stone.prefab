@@ -127,7 +127,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resourceContainerName: Rock
-  resourceType: 2
+  resourceType: 3
+  foodType: 0
   fullAmount: 200
   currentAmount: 200
   userList: []

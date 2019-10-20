@@ -38,8 +38,7 @@ public class WorkerScript : MonoBehaviour
      private string workerSpritePath;
 
      private Inventory inventory;
-
-     private GameObject closestStorage;
+     
      private GameObject savedTarget;
 
      
@@ -106,10 +105,12 @@ public class WorkerScript : MonoBehaviour
 
           ChangeWorkerSprite(workerSpriteType);
 
-          inventory = new Inventory(10);
+          inventory = new Inventory(10 , InventoryType.ALL);
           inventory.ModifyInventory(ResourceType.WOOD, 9);
+          inventory.ModifyInventory(FoodType.BERRY, 10);
+          inventory.ModifyInventory(FoodType.RAW_MEAT, 5);
 
-          
+
      }
 
      void Update()
@@ -126,7 +127,7 @@ public class WorkerScript : MonoBehaviour
           this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
 
           // Reset action cooldown even on idle mode
-          if (actionCooldown <= -1f) actionCooldown = actionCooldownInitial;
+          if (actionCooldown <= -0.74f) actionCooldown = actionCooldownInitial;
 
           HandleActivity();
           LongIdleCheck();
@@ -174,12 +175,12 @@ public class WorkerScript : MonoBehaviour
                     if(workerStatus == WorkerStatusType.UNPACKING)
                     {
                          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
-                         this.inventory.TransferFullItemStackToInventory(closestStorage.GetComponent<BuildingScript>().inventory);
+                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
                          SetTarget(savedTarget);
                     }
-                    else if(target.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE)
+                    else if(target.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE || target.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY)
                     {
-                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory);
+                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
                          SetTargetToGround();
                     }
                     
@@ -225,24 +226,25 @@ public class WorkerScript : MonoBehaviour
           }
      }
      
-     public void UnloadInventory()
+     public void UnloadInventory(BuildingType buildingType)
      {
+          GameObject closestBuildingToUnload  = null;
           if(workerStatus != WorkerStatusType.UNPACKING) { 
 
                float minDistance = float.MaxValue;
                foreach (GameObject building in GlobVars.buildingList)
                {
-                    if (building.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE)
+                    if (building.GetComponent<BuildingScript>().buildingType == buildingType)
                     {
                          if (CalculateDistance(this.gameObject, building) < minDistance)
                          {
                               minDistance = CalculateDistance(this.gameObject, building);
-                              closestStorage = building;
+                              closestBuildingToUnload = building;
                          }
                     }
                }
 
-               if (closestStorage == null)
+               if (closestBuildingToUnload == null)
                {
                     Debug.Log("No storage on the map.");
                     SetTargetToGround();
@@ -250,8 +252,7 @@ public class WorkerScript : MonoBehaviour
                else
                {
                     savedTarget = target;
-                    SetTarget(closestStorage, WorkerStatusType.UNPACKING);
-                    workerStatus = WorkerStatusType.UNPACKING;
+                    SetTarget(closestBuildingToUnload, WorkerStatusType.UNPACKING);
                }
           }
           
@@ -301,20 +302,45 @@ public class WorkerScript : MonoBehaviour
           if (actionCooldown <= 0.0f && target.GetComponent<ResourceScript>().ResourceAmountCanBeDecreased(collectValue))
           {
                actionCooldown = 2.0f;
-               if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().resourceType, collectValue) == false)
+
+               if(target.GetComponent<ResourceScript>().resourceType != ResourceType.NOTHING && target.GetComponent<ResourceScript>().foodType == FoodType.NOTHING)
                {
-                    target.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
-                    SetTargetToGround();
+                    if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().resourceType, collectValue) == false)
+                    {
+                         target.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
+                         SetTargetToGround();
+                    }
+                    else
+                    {
+                         target.GetComponent<ResourceScript>().DecreaseCurrentResourceAmount(collectValue);
+                    }
                }
-               else
+               else if (target.GetComponent<ResourceScript>().resourceType == ResourceType.NOTHING && target.GetComponent<ResourceScript>().foodType != FoodType.NOTHING)
                {
-                    target.GetComponent<ResourceScript>().DecreaseCurrentResourceAmount(collectValue);
+                    if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().foodType, collectValue) == false)
+                    {
+                         target.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
+                         SetTargetToGround();
+                    }
+                    else
+                    {
+                         target.GetComponent<ResourceScript>().DecreaseCurrentResourceAmount(collectValue);
+                    }
                }
+
+               
           }
 
           if (inventory.IsThereFullItemStack())
           {
-               UnloadInventory();
+               if(inventory.FullItemStackItemType() == ItemType.RESOURCE)
+               {
+                    UnloadInventory(BuildingType.STORAGE);
+               }
+               else if (inventory.FullItemStackItemType() == ItemType.FOOD)
+               {
+                    UnloadInventory(BuildingType.GRANARY);
+               }
           }
      }
 

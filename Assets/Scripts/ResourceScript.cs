@@ -6,6 +6,7 @@ public class ResourceScript : MonoBehaviour
 {
      public string resourceContainerName;
      public ResourceType resourceType;
+     public FoodType foodType;
      public int fullAmount, currentAmount;
      public List<GameObject> userList = new List<GameObject>();
      private Quaternion startingPosition;

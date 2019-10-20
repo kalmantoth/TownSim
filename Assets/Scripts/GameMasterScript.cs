@@ -9,27 +9,76 @@ using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using Random = System.Random;
 
-public enum ResourceType { WOOD, WOOD_PROCESSED, STONE, STONE_PROCESSED, FOOD, FOOD_PROCESSED, GOLD };
+public enum ResourceType { NOTHING, WOOD, WOOD_PROCESSED, STONE, STONE_PROCESSED, GOLD, FOOD};
+public enum FoodType { NOTHING, BERRY, RAW_MEAT, COOKED_MEAT, RAW_FISH, COOKED_FISH};
+public enum ItemType { NOTHING, RESOURCE, FOOD };
+public enum InventoryType { RESOURCE, FOOD, ALL };
 public enum WorkerStatusType { IDLE = 1, MOVING = 2 , WOOD_CHOPPING = 3, STONE_MINING = 4, FISHING = 5, FARMING = 6, CONSTRUCING = 7, GATHERING = 8, HUNTING = 9, UNPACKING = 10 }
-public enum BuildingType { HOUSE, TOWNHALL, STORAGE }
+public enum BuildingType { HOUSE, TOWNHALL, STORAGE, CAMPFIRE, GRANARY}
 public enum AnimalType { DEER }
 public enum Season { SPRING, SUMMER, AUTUMN, WINTER }
 
 public class Item
 {
-     public ResourceType resourceType;
      public int value;
 
-     public Item(ResourceType resourceType)
+     public Item()
      {
-          this.resourceType = resourceType;
           this.value = 0;
+     }
+
+     public Item(int value)
+     {
+          this.value = value;
      }
 
      public string ToString()
      {
-          if (this.value > 0) return resourceType.ToString() + " (" + value + " gold)";
-          else return resourceType.ToString();
+          return "YO";
+     }
+}
+
+public class ResourceItem : Item
+{
+     public ResourceType resourceType;
+
+     public ResourceItem(ResourceType resourceType) : base()
+     {
+          this.resourceType = resourceType;
+     }
+
+     public ResourceItem(ResourceType resourceType, int value) : base(value)
+     {
+          this.resourceType = resourceType;
+     }
+
+
+     public string ToString()
+     {
+          if (this.value > 0) return "Resource / " + resourceType.ToString() + " (" + value + " gold)";
+          else return "Resource / " + resourceType.ToString();
+     }
+}
+
+public class FoodItem : Item
+{
+     public FoodType foodType;
+
+     public FoodItem(FoodType foodType) : base()
+     {
+          this.foodType = foodType;
+     }
+
+     public FoodItem(FoodType foodType, int value) : base(value)
+     {
+          this.foodType = foodType;
+     }
+
+
+     public string ToString()
+     {
+          if (this.value > 0) return "Food / " + foodType.ToString() + " (" + value + " gold)";
+          else return "Food / " + foodType.ToString();
      }
 }
 
@@ -54,6 +103,7 @@ public class ItemStack
           this.item = item;
           this.minQuantity = minQuantity;
           this.maxQuantity = maxQuantity;
+
           if (currentQuantity > maxQuantity)
           {
                this.currentQuantity = this.maxQuantity;
@@ -73,7 +123,20 @@ public class ItemStack
 
      public string ToString()
      {
-          return item.ToString() + " " + this.currentQuantity + "/" + this.maxQuantity;
+          if (item is ResourceItem)
+          {
+               return ((ResourceItem)item).ToString() + " " + this.currentQuantity + "/" + this.maxQuantity;
+          }
+          else if (item is FoodItem)
+          {
+               return ((FoodItem)item).ToString() + " " + this.currentQuantity + "/" + this.maxQuantity;
+          }
+          else
+          {
+               return item.ToString() + " " + this.currentQuantity + "/" + this.maxQuantity;
+          }
+          
+
      }
 
      
@@ -83,33 +146,97 @@ public class ItemStack
 
 public class Inventory
 {
+     public InventoryType inventoryType;
      ItemStack[] itemStacks;
 
-     public Inventory(int maxItemQuantity = 100)
-     {
+     int resourceTypeEnumLength = Enum.GetValues(typeof(ResourceType)).Length;
+     int foodTypeEnumLength = Enum.GetValues(typeof(FoodType)).Length;
 
-          // Add all the ItemStack to the inventory at the initalization
-          itemStacks = new ItemStack[Enum.GetValues(typeof(ResourceType)).Length];
-          int index = 0;
-          foreach (ResourceType resType in Enum.GetValues(typeof(ResourceType)))
+     public Inventory(int maxItemQuantity = 100, InventoryType inventoryType = InventoryType.ALL)  
+     {
+          this.inventoryType = inventoryType;
+
+          if (inventoryType == InventoryType.RESOURCE)           // Inventory that can hold only resources
           {
-               itemStacks[index] = new ItemStack(new Item(resType), 0 , maxItemQuantity , 0 );
-               index++;
+               itemStacks = new ItemStack[resourceTypeEnumLength];
+               int index = 0;
+               foreach (ResourceType resType in Enum.GetValues(typeof(ResourceType)))
+               {
+                    itemStacks[index] = new ItemStack(new ResourceItem(resType), 0, maxItemQuantity, 0);
+                    index++;
+               }
           }
+          else if (inventoryType == InventoryType.FOOD)          // Inventory that can hold only foods
+          {
+               itemStacks = new ItemStack[foodTypeEnumLength];
+               int index = 0;
+               foreach (FoodType foodType in Enum.GetValues(typeof(FoodType)))
+               {
+                    itemStacks[index] = new ItemStack(new FoodItem(foodType), 0, maxItemQuantity, 0);
+                    index++;
+               }
+          }
+          else if (inventoryType == InventoryType.ALL)           // Inventory that can hold resources and foods too
+          {
+               // Add all the ItemStack to the inventory at the initalization
+               itemStacks = new ItemStack[resourceTypeEnumLength + foodTypeEnumLength];
+               int index = 0;
+               foreach (ResourceType resType in Enum.GetValues(typeof(ResourceType)))
+               {
+                    itemStacks[index] = new ItemStack(new ResourceItem(resType), 0, maxItemQuantity, 0);
+                    index++;
+               }
+
+               foreach (FoodType foodType in Enum.GetValues(typeof(FoodType)))
+               {
+                    itemStacks[index] = new ItemStack(new FoodItem(foodType), 0, maxItemQuantity, 0);
+                    index++;
+               }
+          }
+          
      }
 
-     public bool ModifyInventory(ResourceType resourceType, int quantity)
+     public bool ModifyInventory(ResourceType resourceType, int modifyingValue)
      {
           foreach (ItemStack iStack in itemStacks)
           {
-               if (iStack.item.resourceType == resourceType)
+               if (iStack.item is ResourceItem)
                {
-                    return iStack.ModifyItemStack(quantity);
+                    ResourceItem resourceItem = (ResourceItem)iStack.item;
+
+                    if (resourceItem.resourceType == resourceType)
+                    {
+                         return iStack.ModifyItemStack(modifyingValue);
+                    }
+                    
                }
+
+               
+               
                
           }
           return false;
-          
+     }
+
+     public bool ModifyInventory(FoodType foodType, int modifyingValue)
+     {
+          foreach (ItemStack iStack in itemStacks)
+          {
+               if (iStack.item is FoodItem)
+               {
+                    FoodItem foodItem = (FoodItem)iStack.item;
+
+                    if (foodItem.foodType == foodType)
+                    {
+                         return iStack.ModifyItemStack(modifyingValue);
+                    }
+                    
+               }
+
+               
+                    
+          }
+          return false;
      }
 
      public bool IsThereFullItemStack()
@@ -125,22 +252,59 @@ public class Inventory
           return false;
      }
 
-     public void TransferFullItemStackToInventory(Inventory otherInventory)
+     public ItemType FullItemStackItemType()
      {
-          int index = 0;
           foreach (ItemStack iStack in itemStacks)
           {
-               if (otherInventory.itemStacks[index].ModifyItemStack(iStack.currentQuantity))   // Transfer full itemStack from the main inventory to the other
+               if (iStack.currentQuantity == iStack.maxQuantity)
                {
-                    iStack.currentQuantity = 0;
+                    if(iStack.item is ResourceItem)
+                    {
+                         return ItemType.RESOURCE;
+                    }
+                    else if(iStack.item is FoodItem)
+                    {
+                         return ItemType.FOOD;
+                    }
+                    
                }
-               index++;
           }
+          return ItemType.NOTHING;
      }
 
-     public int GetResourceCurrentQuantity(ResourceType resourceType)
+     public void TransferFullItemStackToInventory(Inventory otherInventory, InventoryType otherInventoryType)
+     {
+          if (otherInventoryType == InventoryType.RESOURCE)
+          {
+               for (int i = 0; i < resourceTypeEnumLength; i++) //resourceTypeEnumLength
+               {
+                    if (otherInventory.itemStacks[i].ModifyItemStack(itemStacks[i].currentQuantity))   // Transfer full itemStack from the main inventory to the other
+                    {
+                         itemStacks[i].currentQuantity = 0;
+                    }
+               }
+          }
+          else if (otherInventoryType == InventoryType.FOOD)
+          {
+                    for (int i = resourceTypeEnumLength; i < resourceTypeEnumLength + foodTypeEnumLength; i++) //resourceTypeEnumLength
+                    {
+                         if (otherInventory.itemStacks[i - resourceTypeEnumLength].ModifyItemStack(itemStacks[i].currentQuantity))   // Transfer full itemStack from the main inventory to the other
+                         {
+                              itemStacks[i].currentQuantity = 0;
+                         }
+                    }
+          }
+
+     }
+
+     public int GetItemstackCurrentQuantity(ResourceType resourceType)
      {
           return itemStacks[(int)resourceType].currentQuantity;
+     }
+
+     public int GetItemstackCurrentQuantity(FoodType foodType)
+     {
+          return itemStacks[(int)foodType].currentQuantity;
      }
 
      public string ToString()
@@ -416,10 +580,10 @@ public class GameMasterScript : MonoBehaviour
           Debug.Log("The corrigated point's position is " + finalPosition.ToString());
 
           GameObject newBuilding = null;
-          if (BuildingTypeDropdown.value == 0 && GlobVars.WOOD >= 25 && GlobVars.STONE >= 5)
+          if (BuildingTypeDropdown.value == 0 && GlobVars.WOOD >= 30 && GlobVars.STONE >= 10)
           {
                newBuilding = Instantiate(Resources.Load("House"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ResourceType.WOOD, 25); DecreaseResource(ResourceType.STONE, 5);
+               DecreaseResource(ResourceType.WOOD, 30); DecreaseResource(ResourceType.STONE, 10);
                //GlobVars.WOOD -= 25; GlobVars.STONE -= 5;
                SpawnWorker(finalPosition);
           }
@@ -430,10 +594,20 @@ public class GameMasterScript : MonoBehaviour
                SpawnWorker(finalPosition);
                SpawnWorker(finalPosition);
           }
-          else if (BuildingTypeDropdown.value == 2 && GlobVars.WOOD >= 10)
+          else if (BuildingTypeDropdown.value == 2 && GlobVars.WOOD >= 15 && GlobVars.STONE >= 10)
           {
                newBuilding = Instantiate(Resources.Load("Storage"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ResourceType.WOOD, 10);
+               DecreaseResource(ResourceType.WOOD, 15); DecreaseResource(ResourceType.STONE, 10);
+          }
+          else if (BuildingTypeDropdown.value == 3 && GlobVars.WOOD >= 20 && GlobVars.STONE >= 5)
+          {
+               newBuilding = Instantiate(Resources.Load("Granary"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ResourceType.WOOD, 20); DecreaseResource(ResourceType.STONE, 5);
+          }
+          else if (BuildingTypeDropdown.value == 4 && GlobVars.WOOD >= 10 && GlobVars.STONE >= 5)
+          {
+               newBuilding = Instantiate(Resources.Load("Campfire"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ResourceType.WOOD, 10); DecreaseResource(ResourceType.STONE, 5);
           }
           else
           {
@@ -445,6 +619,15 @@ public class GameMasterScript : MonoBehaviour
                RecountStoredResources();
                newBuilding.transform.SetParent(buildingGrid.GetComponent<Transform>());
           }
+     }
+
+     private void SetBuildingTypeScrollDownMenuOptions()
+     {
+          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("House (Wood: 30, Stone: 10)"));
+          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Town Hall (Wood: 80, Stone: 25)"));
+          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Storage (Wood: 15, Stone: 10)"));
+          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Granary (Wood: 20, Stone: 5)"));
+          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Campfire (Wood: 10, Stone: 5)"));
      }
 
 
@@ -472,9 +655,15 @@ public class GameMasterScript : MonoBehaviour
           {
                if (building.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE)
                {
-                    wood += building.GetComponent<BuildingScript>().inventory.GetResourceCurrentQuantity(ResourceType.WOOD);
-                    stone += building.GetComponent<BuildingScript>().inventory.GetResourceCurrentQuantity(ResourceType.STONE);
-                    food += building.GetComponent<BuildingScript>().inventory.GetResourceCurrentQuantity(ResourceType.FOOD);
+                    wood += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.WOOD);
+                    stone += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.STONE);
+                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.FOOD);
+               }
+               else if (building.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY)
+               {
+                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.BERRY);
+                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.COOKED_MEAT);
+                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.COOKED_FISH);
                }
           }
           GlobVars.WOOD = wood;
@@ -493,7 +682,7 @@ public class GameMasterScript : MonoBehaviour
                {
                     if (value == 0) break;
 
-                    if(building.GetComponent<BuildingScript>().inventory.GetResourceCurrentQuantity(resourceType) - value >= 0)
+                    if(building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(resourceType) - value >= 0)
                     {
                          building.GetComponent<BuildingScript>().inventory.ModifyInventory(resourceType, -value);
                          Debug.Log(building.GetComponent<BuildingScript>().gameObject.name + " decrased " + value + " " + resourceType);
@@ -502,9 +691,9 @@ public class GameMasterScript : MonoBehaviour
                     }
                     else
                     {
-                         value = value - building.GetComponent<BuildingScript>().inventory.GetResourceCurrentQuantity(resourceType);
-                         building.GetComponent<BuildingScript>().inventory.ModifyInventory(resourceType, -building.GetComponent<BuildingScript>().inventory.GetResourceCurrentQuantity(resourceType));
-                         Debug.Log(building.GetComponent<BuildingScript>().gameObject.name + " decrased " + building.GetComponent<BuildingScript>().inventory.GetResourceCurrentQuantity(resourceType) + " " + resourceType);
+                         value = value - building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(resourceType);
+                         building.GetComponent<BuildingScript>().inventory.ModifyInventory(resourceType, -building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(resourceType));
+                         Debug.Log(building.GetComponent<BuildingScript>().gameObject.name + " decrased " + building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(resourceType) + " " + resourceType);
                          Debug.Log("Left resource " + value + " " + resourceType);
                     }
                }
@@ -513,13 +702,7 @@ public class GameMasterScript : MonoBehaviour
 
 
 
-     private void SetBuildingTypeScrollDownMenuOptions()
-     {
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("House (Wood: 25, Stone: 5)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Town Hall (Wood: 80, Stone: 25)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Storage (Wood: 20)"));
-     }
-
+     
 
      private void SpawnWorker(Vector3 position)
      {
@@ -674,8 +857,8 @@ public class GameMasterScript : MonoBehaviour
 
      private void UpdateTopUIBar()
      {
-          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day + " (" + GlobVars.season + ") " + "      Passed Time: " + GlobVars.ingameClock + " sec"  +  "  in float: " + GlobVars.ingameClockInFloat;
-          SupplyText.text = "Population: " + GlobVars.POPULATION + "    Wood: " + GlobVars.WOOD + "    Stone: " + GlobVars.STONE + "    Food: " + GlobVars.FOOD + "    Gold: " + GlobVars.GOLD;
+          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day + " (" + GlobVars.season + ") " + "      Passed Time: " + GlobVars.ingameClock + " sec ( " + GlobVars.ingameClockInFloat +  " )";
+          SupplyText.text = "Population: " + GlobVars.POPULATION + "    Wood: " + GlobVars.WOOD + "    Stone: " + GlobVars.STONE + "    Food: " + GlobVars.FOOD;
           TownLevelText.text = "Town level " + townLevel;
      }
 
