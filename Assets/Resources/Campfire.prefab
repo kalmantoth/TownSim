@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 4473780977018455584}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4691317820734596367}
   m_RootOrder: 0
@@ -128,8 +128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buildingType: 3
   buildingName: Campfire
-  initWood: 0
-  initStone: 0
+  buildingInUse: 0
 --- !u!208 &2135865719929924183
 NavMeshObstacle:
   m_ObjectHideFlags: 0
@@ -140,11 +139,11 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 1.86, y: 1.085, z: 0.5}
+  m_Extents: {x: 0.36, y: 0.21, z: 0.5}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: -1.23, z: 0}
+  m_Center: {x: 0, y: -0.21, z: 0}
   m_TimeToStationary: 0.5
 --- !u!65 &6625245581147373882
 BoxCollider:
@@ -157,5 +156,5 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 3.94, y: 3.61, z: 1}
-  m_Center: {x: 0, y: -0.57, z: 0}
+  m_Size: {x: 0.78, y: 0.67, z: 1}
+  m_Center: {x: 0, y: -0.09, z: 0}

@@ -49,8 +49,8 @@ MonoBehaviour:
   resourceContainerName: Deer carcass
   resourceType: 0
   foodType: 2
-  fullAmount: 10
-  currentAmount: 10
+  fullAmount: 50
+  currentAmount: 50
   userList: []
 --- !u!208 &6290736056572453826
 NavMeshObstacle:

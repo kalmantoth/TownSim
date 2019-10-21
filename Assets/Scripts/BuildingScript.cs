@@ -7,22 +7,27 @@ public class BuildingScript : MonoBehaviour
      public BuildingType buildingType;
      public string buildingName;
 
+     public bool isBuildingInUse;
 
      public Inventory inventory;
 
-     private float actionCooldownInitial;
-     private float actionCooldown;
+     public float campfireBurningTimerInitial;
+     public float campfireBurningTimer;
+     //private GameObject user;
+
+
 
      // Basic functions
 
      private void Awake()
      {
+          isBuildingInUse = false;
+
+          campfireBurningTimer = campfireBurningTimerInitial = 5f;
           
-          actionCooldown = actionCooldownInitial = 2f;
-          actionCooldown -= Time.deltaTime;
           // Reset action cooldown even on idle mode
-          if (actionCooldown <= -1f) actionCooldown = actionCooldownInitial;
-          if (actionCooldown <= 0.0f) //doinsomething
+          //if (campfireBurningTimer <= -0.25f) campfireBurningTimer = campfireBurningTimerInitial;
+          if (campfireBurningTimer <= 0.0f) //doinsomething
 
 
           // Setting render sorting order by finding gameobject's global position;
@@ -31,30 +36,56 @@ public class BuildingScript : MonoBehaviour
 
           if (buildingType == BuildingType.STORAGE)
           {
-               inventory = new Inventory(250,InventoryType.RESOURCE);
+               inventory = new Inventory(500,InventoryType.RESOURCE);
+               inventory.ModifyInventory(ResourceType.WOOD, 150);
+               inventory.ModifyInventory(ResourceType.STONE, 150);
           }
 
           if (buildingType == BuildingType.GRANARY)
           {
-               inventory = new Inventory(100,InventoryType.FOOD);
+               inventory = new Inventory(200,InventoryType.FOOD);
+               inventory.ModifyInventory(FoodType.RAW_MEAT, 100);
+               inventory.ModifyInventory(FoodType.BERRY, 100);
+               inventory.ModifyInventory(FoodType.COOKED_MEAT, 50);
 
           }
+
+
 
 
      }
 
      void Update()
      {
-
-          if (GlobVars.ingameClockInFloat % 0.25f == 0)
+          
+          //if (buildingType == BuildingType.CAMPFIRE && isBuildingInUse) campfireBurningTimer -= Time.deltaTime;
+          if (buildingType == BuildingType.CAMPFIRE)
           {
-               
+               if (isBuildingInUse)
+               {
+                    //campfireBurningTimer = campfireBurningTimerInitial;
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire_burning");
+               }
+               else
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire");
+               }
+               /*
+               if (campfireBurningTimer <= 0.0f)
+               {
+                    isBuildingInUse = false;
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire");
+               }*/
+          }
+          
+          if (GlobVars.ingameClockInFloat % 0.1f == 0)
+          {   
           }
 
+
+
           ChangeSpriteBySeason();
-
-
-
+          
      }
 
      // ---------------- //
@@ -62,6 +93,22 @@ public class BuildingScript : MonoBehaviour
      // ---------------- //
 
      // Game Mechanic functions
+     /*
+     public bool isUserSet()
+     {
+          if(this.user != null) return true;
+          else return false;
+     }
+
+     public void setUser(GameObject user)
+     {
+          this.user = user;
+     }
+
+     public void removeUser(GameObject user)
+     {
+          this.user = null;
+     }*/
 
      public void OnMouseDown()
      {
@@ -78,13 +125,15 @@ public class BuildingScript : MonoBehaviour
      {
           string building = this.buildingType.ToString().ToLower();
 
-
-          if (GlobVars.season == Season.WINTER && !building.Equals("campfire"))
+          if(!building.Equals("campfire") || !building.Equals("campfire"))
           {
-               building += "_winter";
+               if (GlobVars.season == Season.WINTER)
+               {
+                    building += "_winter";
+               }
+               this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/" + building);
           }
-
-          this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/" + building);
+          
 
 
      }

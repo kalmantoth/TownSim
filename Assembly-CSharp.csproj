@@ -78,6 +78,7 @@
     <Compile Include="Assets\Scripts\GameMasterScript.cs" />
     <Compile Include="Assets\Scripts\GridScript.cs" />
     <Compile Include="Assets\Scripts\GroundScript.cs" />
+    <Compile Include="Assets\Scripts\ItemSystemScript.cs" />
     <Compile Include="Assets\Scripts\ProjectileScript.cs" />
     <Compile Include="Assets\Scripts\ResourceScript.cs" />
     <Compile Include="Assets\Scripts\WorkerScript.cs" />
