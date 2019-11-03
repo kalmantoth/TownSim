@@ -372,6 +372,8 @@ public class WorkerScript : MonoBehaviour
           
      }
 
+     // Kipakolás során meg kell nézni, hogy milyen tárgy van stack van tele és a legközelebbi azt a tárgyat még tárolható
+
      public void UnloadInventory(BuildingType buildingType, FoodType foodType = FoodType.NOTHING)
      {
           GameObject closestBuildingToUnload  = null;

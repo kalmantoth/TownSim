@@ -81,6 +81,7 @@
     <Compile Include="Assets\Scripts\ItemSystemScript.cs" />
     <Compile Include="Assets\Scripts\ProjectileScript.cs" />
     <Compile Include="Assets\Scripts\ResourceScript.cs" />
+    <Compile Include="Assets\Scripts\WaterSpawnScript.cs" />
     <Compile Include="Assets\Scripts\WorkerScript.cs" />
     <None Include="Assets\ExternalSources\Tilemap\Tiles\Rule Tile\ScriptTemplates\NewCustomRuleTile.cs.txt" />
     <None Include="Assets\ExternalSources\Tilemap\Brushes\Tint Brush Smooth\Shaders\TintedTilemap.shader" />

@@ -85,12 +85,17 @@ public class GameMasterScript : MonoBehaviour
      private Random rnd;
 
      private int townLevel;
-
      
+
+
      void Awake()
      {
+          // Camera settings
+
+
+
           // Timer settings
-          gameTime = new DateTime(300, 6, 1);
+          gameTime = new DateTime(1525, 6, 1);
           dateIncreaseTimerInitial = (yearPassInMinutes * 60f) / (365f);
           //Debug.Log(dateIncreaseTimerInitial);
           dateIncreaseTimer = dateIncreaseTimerInitial;
@@ -146,7 +151,7 @@ public class GameMasterScript : MonoBehaviour
      
      void Update()
      {
-          
+          CameraMovementManagement();
           UpdateIngameTime();
           UpdateSeason();
           ChangeGroundBySeason();
@@ -307,7 +312,7 @@ public class GameMasterScript : MonoBehaviour
      private void SetBuildingTypeScrollDownMenuOptions()
      {
           BuildingTypeDropdown.options.Add(new Dropdown.OptionData("House (Wood: 30, Stone: 10)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Town Hall (Wood: 80, Stone: 25)"));
+          //BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Town Hall (Wood: 80, Stone: 25)"));
           BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Storage (Wood: 15, Stone: 10)"));
           BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Granary (Wood: 20, Stone: 5)"));
           BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Campfire (Wood: 10, Stone: 5)"));
@@ -340,10 +345,17 @@ public class GameMasterScript : MonoBehaviour
                {
                     wood += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.WOOD);
                     stone += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.STONE);
-                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.FOOD);
                }
                else if (building.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY)
                {
+                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.BERRY);
+                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.COOKED_MEAT);
+                    food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.COOKED_FISH);
+               }
+               else if (building.GetComponent<BuildingScript>().buildingType == BuildingType.TOWNHALL)
+               {
+                    wood += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.WOOD);
+                    stone += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(ResourceType.STONE);
                     food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.BERRY);
                     food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.COOKED_MEAT);
                     food += building.GetComponent<BuildingScript>().inventory.GetItemstackCurrentQuantity(FoodType.COOKED_FISH);
@@ -361,7 +373,7 @@ public class GameMasterScript : MonoBehaviour
 
           foreach (GameObject building in GlobVars.buildingList)
           {
-               if (building.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE)
+               if (building.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE || building.GetComponent<BuildingScript>().buildingType == BuildingType.TOWNHALL)
                {
                     if (value == 0) break;
 
@@ -509,6 +521,43 @@ public class GameMasterScript : MonoBehaviour
                GlobVars.FOOD -= calculatedFoodDecrease;
                if (GlobVars.FOOD < 0) GlobVars.FOOD = 0;
           }
+     }
+
+     private void CameraMovementManagement()
+     {
+          //Debug.Log("Mouse position X: " + Input.GetAxis("Mouse X") + "  Y: " + Input.GetAxis("Mouse Y"));
+          //Debug.Log("Camera position X: " + cam.transform.position.x + "  Y: " + cam.transform.position.y);
+
+          int screenBoundary = 10;
+          float camMovingSpeed = 20.0f;
+          float camZoomSpeed = 20f;
+          
+          
+
+          if ((Input.mousePosition.x > Screen.width - screenBoundary && Input.mousePosition.x < Screen.width + screenBoundary ) || Input.GetKey(KeyCode.D))
+          {
+               cam.transform.position += new Vector3(Time.deltaTime * camMovingSpeed, 0.0f, 0.0f);
+          }
+          if ((Input.mousePosition.x < 0 + screenBoundary && Input.mousePosition.x > 0 - screenBoundary) || Input.GetKey(KeyCode.A))
+          {
+               cam.transform.position += new Vector3( -(Time.deltaTime * camMovingSpeed), 0.0f, 0.0f);
+          }
+          if ((Input.mousePosition.y > Screen.height - screenBoundary && Input.mousePosition.y < Screen.height + screenBoundary) || Input.GetKey(KeyCode.W))
+          {
+               cam.transform.position += new Vector3(0.0f, Time.deltaTime * camMovingSpeed ,0.0f);
+          }
+          if (Input.mousePosition.y < 0 + screenBoundary && Input.mousePosition.y > 0 - screenBoundary || Input.GetKey(KeyCode.S))
+          {
+               cam.transform.position += new Vector3(0.0f, -(Time.deltaTime * camMovingSpeed),  0.0f);
+          }
+          
+          cam.transform.position += new Vector3(0f, 0f, Input.GetAxis("Mouse ScrollWheel") * camZoomSpeed);
+
+          if (cam.transform.position.z > -50) cam.transform.position = new Vector3(cam.transform.position.x , cam.transform.position.y , -50f);
+          else if(cam.transform.position.z < -99) cam.transform.position = new Vector3(cam.transform.position.x, cam.transform.position.y, -99f);
+
+
+
      }
 
      private void UpdateInfoPanelText()

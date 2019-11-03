@@ -10,9 +10,12 @@ public class BuildingScript : MonoBehaviour
      public bool isBuildingInUse;
 
      public Inventory inventory;
+     public InventoryType inventoryType;
 
-     public float campfireBurningTimerInitial;
-     public float campfireBurningTimer;
+
+
+     private float campfireBurningTimerInitial;
+     private float campfireBurningTimer;
      //private GameObject user;
 
 
@@ -36,6 +39,7 @@ public class BuildingScript : MonoBehaviour
 
           if (buildingType == BuildingType.STORAGE)
           {
+               inventoryType = InventoryType.RESOURCE;
                inventory = new Inventory(500,InventoryType.RESOURCE);
                inventory.ModifyInventory(ResourceType.WOOD, 150);
                inventory.ModifyInventory(ResourceType.STONE, 150);
@@ -43,11 +47,20 @@ public class BuildingScript : MonoBehaviour
 
           if (buildingType == BuildingType.GRANARY)
           {
+               inventoryType = InventoryType.FOOD;
                inventory = new Inventory(200,InventoryType.FOOD);
                inventory.ModifyInventory(FoodType.RAW_MEAT, 100);
                inventory.ModifyInventory(FoodType.BERRY, 100);
                inventory.ModifyInventory(FoodType.COOKED_MEAT, 50);
+          }
 
+          if (buildingType == BuildingType.TOWNHALL)
+          {
+               inventoryType = InventoryType.ALL;
+               inventory = new Inventory(75);
+               inventory.ModifyInventory(ResourceType.WOOD, 75);
+               inventory.ModifyInventory(ResourceType.STONE, 75);
+               inventory.ModifyInventory(FoodType.COOKED_MEAT, 75);
           }
 
 
