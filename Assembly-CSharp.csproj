@@ -75,6 +75,7 @@
     <Compile Include="Assets\ExternalSources\Tilemap\Tiles\Weighted Random Tile\WeightedRandomTile.cs" />
     <Compile Include="Assets\Scripts\AnimalScript.cs" />
     <Compile Include="Assets\Scripts\BuildingScript.cs" />
+    <Compile Include="Assets\Scripts\FarmScript.cs" />
     <Compile Include="Assets\Scripts\GameMasterScript.cs" />
     <Compile Include="Assets\Scripts\GridScript.cs" />
     <Compile Include="Assets\Scripts\GroundScript.cs" />

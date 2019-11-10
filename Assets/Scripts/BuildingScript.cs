@@ -10,20 +10,25 @@ public class BuildingScript : MonoBehaviour
      public bool isBuildingInUse;
 
      public Inventory inventory;
-     public InventoryType inventoryType;
+     public ItemGroup itemGroup;
 
+     public ItemType selectedActiveItemType;
 
+     public GameObject workerTargetPoint;
 
      private float campfireBurningTimerInitial;
      private float campfireBurningTimer;
      //private GameObject user;
 
-
+     public bool menuShow;
+     public Vector3 menuShowPosition;
 
      // Basic functions
 
      private void Awake()
      {
+          workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
+          
           isBuildingInUse = false;
 
           campfireBurningTimer = campfireBurningTimerInitial = 5f;
@@ -39,28 +44,28 @@ public class BuildingScript : MonoBehaviour
 
           if (buildingType == BuildingType.STORAGE)
           {
-               inventoryType = InventoryType.RESOURCE;
-               inventory = new Inventory(500,InventoryType.RESOURCE);
-               inventory.ModifyInventory(ResourceType.WOOD, 150);
-               inventory.ModifyInventory(ResourceType.STONE, 150);
+               itemGroup = ItemGroup.RESOURCE;
+               inventory = new Inventory(500 , ItemGroup.RESOURCE);
+              /* inventory.ModifyInventory(ItemType.WOOD, 150);
+               inventory.ModifyInventory(ItemType.STONE, 150);*/
           }
 
           if (buildingType == BuildingType.GRANARY)
           {
-               inventoryType = InventoryType.FOOD;
-               inventory = new Inventory(200,InventoryType.FOOD);
-               inventory.ModifyInventory(FoodType.RAW_MEAT, 100);
-               inventory.ModifyInventory(FoodType.BERRY, 100);
-               inventory.ModifyInventory(FoodType.COOKED_MEAT, 50);
+               itemGroup = ItemGroup.FOOD;
+               inventory = new Inventory(200 , ItemGroup.FOOD);
+               /*inventory.ModifyInventory(ItemType.RAW_MEAT, 100);
+               inventory.ModifyInventory(ItemType.BERRY, 100);
+               inventory.ModifyInventory(ItemType.COOKED_MEAT, 50);*/
           }
 
           if (buildingType == BuildingType.TOWNHALL)
           {
-               inventoryType = InventoryType.ALL;
+               itemGroup = ItemGroup.ALL;
                inventory = new Inventory(75);
-               inventory.ModifyInventory(ResourceType.WOOD, 75);
-               inventory.ModifyInventory(ResourceType.STONE, 75);
-               inventory.ModifyInventory(FoodType.COOKED_MEAT, 75);
+               inventory.ModifyInventory(ItemType.WOOD, 75);
+               inventory.ModifyInventory(ItemType.STONE, 75);
+               inventory.ModifyInventory(ItemType.BERRY, 35);
           }
 
 
@@ -70,62 +75,110 @@ public class BuildingScript : MonoBehaviour
 
      void Update()
      {
-          
-          //if (buildingType == BuildingType.CAMPFIRE && isBuildingInUse) campfireBurningTimer -= Time.deltaTime;
-          if (buildingType == BuildingType.CAMPFIRE)
-          {
-               if (isBuildingInUse)
-               {
-                    //campfireBurningTimer = campfireBurningTimerInitial;
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire_burning");
-               }
-               else
-               {
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire");
-               }
-               /*
-               if (campfireBurningTimer <= 0.0f)
-               {
-                    isBuildingInUse = false;
-                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire");
-               }*/
-          }
-          
           if (GlobVars.ingameClockInFloat % 0.1f == 0)
           {   
           }
-
-
-
-          ChangeSpriteBySeason();
-          
      }
+
+     private void LateUpdate()
+     {
+          ChangeSpriteBySeason();
+          ChangeSpiritBuildingTypeSpecific();
+          ModifyRenderingOrder();
+     }
+
 
      // ---------------- //
      // ---------------- //
      // ---------------- //
 
      // Game Mechanic functions
-     /*
-     public bool isUserSet()
-     {
-          if(this.user != null) return true;
-          else return false;
-     }
-
-     public void setUser(GameObject user)
-     {
-          this.user = user;
-     }
-
-     public void removeUser(GameObject user)
-     {
-          this.user = null;
-     }*/
+     
 
      public void OnMouseDown()
      {
           GlobVars.infoPanelGameObject = this.gameObject;
+     }
+
+     public void OnMouseOver()
+     {
+          if (Input.GetMouseButtonDown(1) && GlobVars.selectedWorkerCount == 0)
+          {
+               Debug.Log("Pressed right button on " + buildingName);
+               menuShow = true;
+               menuShowPosition = Input.mousePosition;
+               menuShowPosition.y = Screen.height - menuShowPosition.y;
+          }
+     }
+
+     private void OnGUI()
+     {
+          if (menuShow && Input.GetMouseButton(1))
+          {
+               GUIStyle customStyle = new GUIStyle(GUI.skin.GetStyle("label")); // Menu style
+               customStyle.fontSize = 18;
+               customStyle.normal.textColor = Color.white;
+
+               if (buildingType == BuildingType.FARM)
+               {
+                    if (this.GetComponent<FarmScript>().farmType == FarmType.NOTHING && GlobVars.season != Season.WINTER)
+                    {
+                         Utils.DrawScreenRect(new Rect(menuShowPosition.x, menuShowPosition.y - 30, 100f, 120f), Color.gray); // Background to the menu
+                         GUI.Label(new Rect(menuShowPosition.x + 10, menuShowPosition.y - 30, 100f, 30f), "Plant type", customStyle); // Menu label 
+                         if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y, 100f, 30f), "Potato"))    // Options for the menu
+                         {
+                              Debug.Log("Clicked on POTATO button.");
+                              this.GetComponent<FarmScript>().farmType = FarmType.POTATO;
+                              this.GetComponent<FarmScript>().farmIsReadyToGrowPlants = true;
+                              menuShow = false;
+                         }
+                         else if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y + 30, 100f, 30f), "Wheat"))
+                         {
+                              Debug.Log("Clicked on WHEAT button.");
+                              this.GetComponent<FarmScript>().farmType = FarmType.WHEAT;
+                              this.GetComponent<FarmScript>().farmIsReadyToGrowPlants = true;
+                              menuShow = false;
+                         }
+                         else if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y + 60, 100f, 30f), "Nothing"))
+                         {
+                              Debug.Log("Clicked on NOTHING button.");
+                              this.GetComponent<FarmScript>().farmType = FarmType.NOTHING;
+                              this.GetComponent<FarmScript>().farmIsReadyToGrowPlants = false;
+                              menuShow = false;
+                         }
+                    }
+               }
+               else if(buildingType == BuildingType.CAMPFIRE)
+               {
+                    Utils.DrawScreenRect(new Rect(menuShowPosition.x, menuShowPosition.y - 30, 100f, 150f), Color.gray); // Background to the menu
+                    GUI.Label(new Rect(menuShowPosition.x + 30, menuShowPosition.y - 30, 100f, 30f), "Cook", customStyle); // Menu label 
+                    if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y, 100f, 30f), "Potato"))    // Options for the menu
+                    {
+                         selectedActiveItemType = ItemType.POTATO;
+                         menuShow = false;
+                    }
+                    else if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y + 30, 100f, 30f), "Meat"))
+                    {
+                         selectedActiveItemType = ItemType.RAW_MEAT;
+                         menuShow = false;
+                    }
+                    else if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y + 60, 100f, 30f), "Fish"))
+                    {
+                         selectedActiveItemType = ItemType.RAW_FISH;
+                         menuShow = false;
+                    }
+                    else if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y + 90, 100f, 30f), "Anything"))
+                    {
+                         selectedActiveItemType = ItemType.ANYTHING;
+                         menuShow = false;
+                    }
+               }
+               
+          }
+          else
+          {
+               menuShow = false;
+          }
      }
 
      // ---------------- //
@@ -134,24 +187,65 @@ public class BuildingScript : MonoBehaviour
 
      // Graphic modifying functions
 
+     public void ChangeSpiritBuildingTypeSpecific()
+     {
+          if (buildingType == BuildingType.CAMPFIRE)
+          {
+               if (isBuildingInUse)
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire_burning");
+               }
+               else
+               {
+                    this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/campfire");
+               }
+          }
+     }
+
      public void ChangeSpriteBySeason()
      {
+          
           string building = this.buildingType.ToString().ToLower();
 
-          if(!building.Equals("campfire") || !building.Equals("campfire"))
+          if (GlobVars.season == Season.WINTER)
           {
-               if (GlobVars.season == Season.WINTER)
+               if(building.Equals("campfire"))
+               {
+
+               }
+               else if(building.Equals("farm"))
+               {
+                    if (this.gameObject.GetComponent<FarmScript>().stage == 0 && this.gameObject.GetComponent<FarmScript>().farmType != FarmType.NOTHING)
+                    {
+                         building += "_winter";
+                    }
+                    else if (this.gameObject.GetComponent<FarmScript>().farmType == FarmType.NOTHING)
+                    {
+                         building += "_winter";
+                    }
+                         
+               }
+               else
                {
                     building += "_winter";
-               }
-               this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/" + building);
+               } 
+          }
+
+          this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/" + building);
+          
+     }
+
+     public void ModifyRenderingOrder()
+     {
+          if(this.GetComponent<ResourceScript>() == null)
+          {
+               this.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) - 25); // The number -50 is because the worker render's correct display
           }
           
-
-
      }
 
 
+     
 
      // ---------------- //
      // ---------------- //
@@ -162,8 +256,17 @@ public class BuildingScript : MonoBehaviour
 
      public string ToString()
      {
-          if (buildingType == BuildingType.STORAGE)    return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t inventory: " + inventory.ToStringNoZeroItems();
-          else if (buildingType == BuildingType.GRANARY) return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t inventory: " + inventory.ToStringNoZeroItems();
+          if (buildingType == BuildingType.STORAGE || buildingType == BuildingType.GRANARY || buildingType == BuildingType.TOWNHALL)    return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t inventory: " + inventory.ToString();
+          else if(buildingType == BuildingType.FARM)
+          {
+               return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t " + gameObject.GetComponent<FarmScript>().ToString();
+               
+          }
+          else if (buildingType == BuildingType.CAMPFIRE)
+          {
+               return buildingName + "\n\tbuilding type: " + buildingType.ToString() + "\n\t selected food type: " + selectedActiveItemType.ToString();
+
+          }
           else return buildingName + "\n\tbuilding type: " + buildingType.ToString();
 
 

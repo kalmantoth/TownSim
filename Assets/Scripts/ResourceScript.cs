@@ -5,14 +5,17 @@ using UnityEngine;
 public class ResourceScript : MonoBehaviour
 {
      public string resourceContainerName;
-     public ResourceType resourceType;
-     public FoodType foodType;
+     public ItemType itemType;
      public int fullAmount, currentAmount;
      public List<GameObject> userList = new List<GameObject>();
      private Quaternion startingPosition;
+     public GameObject workerTargetPoint;
 
-     void Start()
+     void Awake()
      {
+
+          workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
+
           // Setting render sorting order by finding gameobject's global position;
           //this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
 
@@ -139,15 +142,24 @@ public class ResourceScript : MonoBehaviour
 
      public void AddToResourceUserList(GameObject worker)
      {
-          if(!userList.Contains(worker))
-          userList.Add(worker);
+          if(!userList.Contains(worker)) userList.Add(worker);
      }
 
      public void RemoveFromResourceUserList(GameObject worker)
      {
+          Debug.Log("Worker removed from user list.");
           userList.Remove(worker);
      }
      
+     public bool IsResourceEmpty()
+     {
+          if(currentAmount <= 0)
+          {
+               return true;
+          }
+          return false;
+     }
+
 
      public void DestroyResourceGameObject()
      {
@@ -168,7 +180,7 @@ public class ResourceScript : MonoBehaviour
 
      public string ToString()
      {
-          return resourceContainerName + "\n\tresource type: " + resourceType.ToString() + "\n\tworker's count: " + userList.Count + "\n\tresource amount: " + currentAmount + "/" + fullAmount;
+          return resourceContainerName + "\n\tresource type: " + itemType.ToString() + "\n\tworker's count: " + userList.Count + "\n\tresource amount: " + currentAmount + "/" + fullAmount;
      }
 
 }

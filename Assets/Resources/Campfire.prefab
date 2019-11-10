@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 4473780977018455584}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 4, y: 4, z: 1}
   m_Children: []
   m_Father: {fileID: 4691317820734596367}
   m_RootOrder: 0
@@ -80,6 +80,36 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &6794493591921560824
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7260482335272109366}
+  m_Layer: 12
+  m_Name: WorkerTargetPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7260482335272109366
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6794493591921560824}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.03, y: -1.01, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 4691317820734596367}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7386933704724865238
 GameObject:
   m_ObjectHideFlags: 0
@@ -107,10 +137,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7386933704724865238}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.7, y: -1.58, z: -1.8617315}
+  m_LocalPosition: {x: 0, y: 0, z: -1.8617315}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2306486432990796708}
+  - {fileID: 7260482335272109366}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -128,7 +159,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buildingType: 3
   buildingName: Campfire
-  buildingInUse: 0
+  isBuildingInUse: 0
+  itemGroup: 0
+  selectedActiveItemType: 13
+  workerTargetPoint: {fileID: 0}
+  menuShow: 0
+  menuShowPosition: {x: 0, y: 0, z: 0}
 --- !u!208 &2135865719929924183
 NavMeshObstacle:
   m_ObjectHideFlags: 0
@@ -139,11 +175,11 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 0.36, y: 0.21, z: 0.5}
+  m_Extents: {x: 1.32, y: 0.76, z: 0.5}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: -0.21, z: 0}
+  m_Center: {x: 0, y: -0.83, z: 0}
   m_TimeToStationary: 0.5
 --- !u!65 &6625245581147373882
 BoxCollider:
@@ -156,5 +192,5 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.78, y: 0.67, z: 1}
-  m_Center: {x: 0, y: -0.09, z: 0}
+  m_Size: {x: 2.71, y: 1.56, z: 1}
+  m_Center: {x: -0.05, y: -0.81, z: 0}

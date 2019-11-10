@@ -4,105 +4,94 @@ using UnityEngine;
 using System;
 
 
-public enum ResourceType { NOTHING, WOOD, WOOD_PROCESSED, STONE, STONE_PROCESSED, GOLD, FOOD };
-public enum FoodType { NOTHING, BERRY, RAW_MEAT, COOKED_MEAT, RAW_FISH, COOKED_FISH };
-public enum ItemType { NOTHING, RESOURCE, FOOD };
-public enum InventoryType { RESOURCE, FOOD, ALL };
+public enum ItemType { NOTHING, WOOD, STONE, GOLD, BERRY, RAW_MEAT, COOKED_MEAT, RAW_FISH, COOKED_FISH, POTATO, BAKED_POTATO, WHEAT, BREAD, ANYTHING};
+public enum ItemGroup { NOTHING, RESOURCE, FOOD, EDIBLE_FOOD, ALL };
+
+
 
 public class Item
 {
-     public int value;
-
-     public Item()
-     {
-          this.value = 0;
-     }
-
-     public Item(int value)
-     {
-          this.value = value;
-     }
-
-     public string ToString()
-     {
-          return value.ToString();
-     }
-}
-
-public class ResourceItem : Item
-{
-     public ResourceType resourceType;
-
-     public ResourceItem(ResourceType resourceType) : base()
-     {
-          this.resourceType = resourceType;
-     }
-
-     public ResourceItem(ResourceType resourceType, int value) : base(value)
-     {
-          this.resourceType = resourceType;
-     }
-
-
-     public string ToString()
-     {
-          if (this.value > 0) return "Resource / " + resourceType.ToString() + " (" + value + " gold)";
-          else return "Resource / " + resourceType.ToString();
-     }
-}
-
-public class FoodItem : Item
-{
-     public FoodType foodType;
-
-     public FoodItem(FoodType foodType) : base()
-     {
-          this.foodType = foodType;
-     }
-
-     public FoodItem(FoodType foodType, int value) : base(value)
-     {
-          this.foodType = foodType;
-     }
-
-
-     public string ToString()
-     {
-          if (this.value > 0) return "Food / " + foodType.ToString() + " (" + value + " gold)";
-          else return "Food / " + foodType.ToString();
-     }
-}
-
-public class ItemStack
-{
-
-     public Item item;
+     public ItemType itemType;
      public int minQuantity;
      public int maxQuantity;
      public int currentQuantity;
+     public string itemName;
+     public bool isFood;
+     public bool isEdible;
 
-     public ItemStack(Item item)
+     public Item(ItemType itemType)
      {
-          this.item = item;
+          this.itemType = itemType;
           this.minQuantity = 0;
           this.maxQuantity = 100;
           this.currentQuantity = 0;
+
+          this.itemName = "";
+          itemEdibleCheckInConstructor(itemType);
      }
 
-     public ItemStack(Item item, int minQuantity, int maxQuantity, int currentQuantity)
+     public Item(ItemType itemType, int maxQuantity)
      {
-          this.item = item;
-          this.minQuantity = minQuantity;
+          this.itemType = itemType;
+          this.minQuantity = this.currentQuantity = 0;
+          this.maxQuantity = maxQuantity;
+          
+          this.itemName = "";
+          itemEdibleCheckInConstructor(itemType);
+
+     }
+
+     public Item(ItemType itemType, int currentQuantity, int maxQuantity)
+     {
+          this.itemType = itemType;
+          this.minQuantity = 0;
           this.maxQuantity = maxQuantity;
 
-          if (currentQuantity > maxQuantity)
-          {
-               this.currentQuantity = this.maxQuantity;
-          }
+          if (currentQuantity > maxQuantity) this.currentQuantity = maxQuantity;
+          else if (currentQuantity < minQuantity) this.currentQuantity = minQuantity;
           else this.currentQuantity = currentQuantity;
+          
+          this.itemName = "";
+          itemEdibleCheckInConstructor(itemType);
+
      }
 
-     public bool ModifyItemStack(int modifyingValue)
+     private void itemEdibleCheckInConstructor(ItemType itemType)
+     {
+          switch (itemType)
+          {
+               case ItemType.RAW_FISH:
+               case ItemType.RAW_MEAT:
+               case ItemType.POTATO:
+               case ItemType.WHEAT:
+                    this.isFood = true;
+                    this.isEdible = false;
+                    break;
+               case ItemType.BAKED_POTATO:
+               case ItemType.BREAD:
+               case ItemType.BERRY:
+               case ItemType.COOKED_FISH:
+               case ItemType.COOKED_MEAT:
+                    this.isFood = true;
+                    this.isEdible = true;
+                    break;
+               default:
+                    this.isFood = false;
+                    this.isEdible = false;
+                    break;
+          }
+     }
+
+     public bool CanModifyItemQuantity(int modifyingValue)
+     {
+          if (currentQuantity + modifyingValue >= minQuantity && currentQuantity + modifyingValue <= maxQuantity)
+          {
+               return true;
+          }
+          return false;
+     }
+
+     public bool ModifyItemQuantity(int modifyingValue)
      {
           if (currentQuantity + modifyingValue >= minQuantity && currentQuantity + modifyingValue <= maxQuantity)
           {
@@ -111,262 +100,183 @@ public class ItemStack
           }
           return false;
      }
-
+     
      public string ToString()
      {
-          if (item is ResourceItem)
-          {
-               return ((ResourceItem)item).ToString() + " " + this.currentQuantity + "/" + this.maxQuantity;
-          }
-          else if (item is FoodItem)
-          {
-               return ((FoodItem)item).ToString() + " " + this.currentQuantity + "/" + this.maxQuantity;
-          }
-          else
-          {
-               return item.ToString() + " " + this.currentQuantity + "/" + this.maxQuantity;
-          }
-
-
+          return itemType.ToString() + " (" + currentQuantity + "/" + maxQuantity + ")";
      }
-
-
-
-
 }
+
+
 
 public class Inventory
 {
-     public InventoryType inventoryType;
-     public int maxItemQuantity;
-     ItemStack[] itemStacks;
+     string[] itemTypeEnumNames = Enum.GetNames(typeof(ItemType));
+     ItemType[] itemTypeEnumValues = (ItemType[])Enum.GetValues(typeof(ItemType));
 
-     int resourceTypeEnumLength = Enum.GetValues(typeof(ResourceType)).Length;
-     int foodTypeEnumLength = Enum.GetValues(typeof(FoodType)).Length;
+     public ItemGroup itemGroup;
+     public Item[] items = new Item[Enum.GetValues(typeof(ItemType)).Length];
 
-     public Inventory(int maxItemQuantity = 100, InventoryType inventoryType = InventoryType.ALL)
+     
+
+     public Inventory(int maxItemQuantity = 100, ItemGroup itemGroup = ItemGroup.ALL)
      {
-          this.inventoryType = inventoryType;
-          this.maxItemQuantity = maxItemQuantity;
+          this.itemGroup = itemGroup;
 
-          if (inventoryType == InventoryType.RESOURCE)           // Inventory that can hold only resources
-          {
-               itemStacks = new ItemStack[resourceTypeEnumLength];
-               int index = 0;
-               foreach (ResourceType resType in Enum.GetValues(typeof(ResourceType)))
-               {
-                    itemStacks[index] = new ItemStack(new ResourceItem(resType), 0, maxItemQuantity, 0);
-                    index++;
-               }
-          }
-          else if (inventoryType == InventoryType.FOOD)          // Inventory that can hold only foods
-          {
-               itemStacks = new ItemStack[foodTypeEnumLength];
-               int index = 0;
-               foreach (FoodType foodType in Enum.GetValues(typeof(FoodType)))
-               {
-                    itemStacks[index] = new ItemStack(new FoodItem(foodType), 0, maxItemQuantity, 0);
-                    index++;
-               }
-          }
-          else if (inventoryType == InventoryType.ALL)           // Inventory that can hold resources and foods too
-          {
-               // Add all the ItemStack to the inventory at the initalization
-               itemStacks = new ItemStack[resourceTypeEnumLength + foodTypeEnumLength];
-               int index = 0;
-               foreach (ResourceType resType in Enum.GetValues(typeof(ResourceType)))
-               {
-                    itemStacks[index] = new ItemStack(new ResourceItem(resType), 0, maxItemQuantity, 0);
-                    index++;
-               }
 
-               foreach (FoodType foodType in Enum.GetValues(typeof(FoodType)))
-               {
-                    itemStacks[index] = new ItemStack(new FoodItem(foodType), 0, maxItemQuantity, 0);
-                    index++;
-               }
+          for(int i = 0; i < itemTypeEnumValues.Length; i++)
+          {
+               items[i] = new Item(itemTypeEnumValues[i], maxItemQuantity);
           }
-
+          
      }
 
-     public bool ModifyInventory(ResourceType resourceType, int modifyingValue)
+     public List<ItemType> findNonEmptyEdibleItemTypes()
      {
-          foreach (ItemStack iStack in itemStacks)
-          {
-               if (iStack.item is ResourceItem)
-               {
-                    ResourceItem resourceItem = (ResourceItem)iStack.item;
+          List<ItemType> nonEmptyEdibleItemTypes = new List<ItemType>();
 
-                    if (resourceItem.resourceType == resourceType)
-                    {
-                         return iStack.ModifyItemStack(modifyingValue);
-                    }
-               }
+          foreach (Item item in items)
+          {
+               if (item.isEdible && item.minQuantity != item.currentQuantity) nonEmptyEdibleItemTypes.Add(item.itemType);
           }
-          return false;
+
+          if (nonEmptyEdibleItemTypes.Count != 0) return nonEmptyEdibleItemTypes;
+          else return null;
      }
 
-     public bool ModifyInventory(FoodType foodType, int modifyingValue)
+     public bool CanModifyItemQuantity(ItemType itemType,int modifyingValue)
      {
-          foreach (ItemStack iStack in itemStacks)
-          {
-               if (iStack.item is FoodItem)
-               {
-                    FoodItem foodItem = (FoodItem)iStack.item;
-
-                    if (foodItem.foodType == foodType)
-                    {
-                         return iStack.ModifyItemStack(modifyingValue);
-                    }
-
-               }
-          }
-          return false;
+          return items[(int)itemType].CanModifyItemQuantity(modifyingValue);
      }
 
-     public int GetItemQuantity(ResourceType resourceType)
+     public bool ModifyInventory(ItemType itemType, int modifyingValue)
      {
-          foreach (ItemStack iStack in itemStacks)
-          {
-               if (iStack.item is ResourceItem)
-               {
-                    ResourceItem resourceItem = (ResourceItem)iStack.item;
+          return items[(int)itemType].ModifyItemQuantity(modifyingValue);
+     }
+     
 
-                    if (resourceItem.resourceType == resourceType)
-                    {
-                         return iStack.currentQuantity;
-                    }
-               }
-          }
-          return 0;
+     public int GetItemQuantity(ItemType itemType)
+     {
+          return items[(int)itemType].currentQuantity;
      }
 
-     public int GetItemQuantity(FoodType foodType)
+     public int GetMaxItemQuantity(ItemType itemType)
      {
-          foreach (ItemStack iStack in itemStacks)
-          {
-               if (iStack.item is FoodItem)
-               {
-                    FoodItem foodItem = (FoodItem)iStack.item;
+          return items[(int)itemType].maxQuantity;
+     }
 
-                    if (foodItem.foodType == foodType)
-                    {
-                         return iStack.currentQuantity;
-                    }
-               }
-          }
-          return 0;
+     public int GetItemQuantityToReachMax(ItemType itemType)
+     {
+          return items[(int)itemType].maxQuantity - items[(int)itemType].currentQuantity;
+     }
+
+     public int GetItemQuantityToReachMin(ItemType itemType)
+     {
+          return items[(int)itemType].maxQuantity - items[(int)itemType].currentQuantity;
+     }
+
+
+     public bool IsItemTypeFull(ItemType itemType)
+     {
+          if (items[(int)itemType].currentQuantity == items[(int)itemType].maxQuantity) return true;
+          else return false;
      }
 
      public bool IsThereFullItemStack()
      {
-          foreach (ItemStack iStack in itemStacks)
+          foreach (Item item in items)
           {
-               if (iStack.currentQuantity == iStack.maxQuantity)
+               if (item.currentQuantity == item.maxQuantity)
                {
                     return true;
                }
           }
-
           return false;
      }
 
-     public bool IsFoodTypeItemStackFull(FoodType foodType)
+     public bool IsThereFoodWhich(bool isEdible)
      {
-          foreach (ItemStack iStack in itemStacks)
+          foreach (Item item in items)
           {
-               if (iStack.currentQuantity == iStack.maxQuantity)
+               if (item.currentQuantity != 0 && item.isEdible == isEdible && item.isFood)
                {
-                    if(iStack.item is FoodItem)
-                    {
-                         if(((FoodItem)iStack.item).foodType == foodType) return true;
-                    }
-
-                    
+                    return true;
                }
           }
-
           return false;
      }
 
-     public ItemType FullItemStackItemType()
+     public ItemType GetFoodItemTypeWhich(bool isEdible)
      {
-          foreach (ItemStack iStack in itemStacks)
+          foreach (Item item in items)
           {
-               if (iStack.currentQuantity == iStack.maxQuantity)
+               if (item.currentQuantity != 0 && item.isEdible == isEdible && item.isFood)
                {
-                    if (iStack.item is ResourceItem)
-                    {
-                         return ItemType.RESOURCE;
-                    }
-                    else if (iStack.item is FoodItem)
-                    {
-                         return ItemType.FOOD;
-                    }
-
+                    return item.itemType;
                }
           }
           return ItemType.NOTHING;
      }
 
-     public void TransferFullItemStackToInventory(Inventory otherInventory, InventoryType otherInventoryType)
+     public ItemType GetFirstFoodWhich(bool isEdible)
      {
-          if (otherInventoryType == InventoryType.RESOURCE)
+          foreach (Item item in items)
           {
-               for (int i = 0; i < resourceTypeEnumLength; i++) //resourceTypeEnumLength
+               if (item.currentQuantity != 0 && item.isEdible == isEdible && item.isFood)
                {
-                    if (otherInventory.itemStacks[i].ModifyItemStack(itemStacks[i].currentQuantity))   // Transfer full itemStack from the main inventory to the other
-                    {
-                         itemStacks[i].currentQuantity = 0;
-                    }
-               }
-          }
-          else if (otherInventoryType == InventoryType.FOOD)
-          {
-               for (int i = resourceTypeEnumLength; i < resourceTypeEnumLength + foodTypeEnumLength; i++) //resourceTypeEnumLength
-               {
-                    if (otherInventory.itemStacks[i - resourceTypeEnumLength].ModifyItemStack(itemStacks[i].currentQuantity))   // Transfer full itemStack from the main inventory to the other
-                    {
-                         itemStacks[i].currentQuantity = 0;
-                    }
+                    return item.itemType;
                }
           }
 
+          return ItemType.NOTHING;
      }
 
-     public int GetItemstackCurrentQuantity(ResourceType resourceType)
+
+
+     public ItemType FullItemStackItemType()
      {
-          return itemStacks[(int)resourceType].currentQuantity;
+          foreach (Item item in items)
+          {
+               if (item.currentQuantity == item.maxQuantity)
+               {
+                    return item.itemType;
+               }
+          }
+          return ItemType.NOTHING;
+          
      }
-
-     public int GetItemstackCurrentQuantity(FoodType foodType)
-     {
-          return itemStacks[(int)foodType].currentQuantity;
-     }
-
      
+    
+     public void TransferFullItemStackToInventory(Inventory otherInventory, ItemGroup otherInventoryType) // Transfer full items from the main inventory to the other     
+     {
+          for (int i = 0; i < itemTypeEnumValues.Length; i++) 
+          {
+               if (otherInventory.items[i].ModifyItemQuantity(items[i].currentQuantity))   
+               {
+                    items[i].currentQuantity = 0;
+               }
+          }
+     }
+     
+     public int GetItemCurrentQuantity(ItemType itemType)
+     {
+          return items[(int)itemType].currentQuantity;
+     }
+    
+
      public string ToString()
      {
           string returnString = "";
-          foreach (ItemStack iStack in itemStacks)
+          foreach (Item item in items)
           {
-               returnString += iStack.ToString() + "   ";
-          }
-          return returnString;
-     }
-
-     public string ToStringNoZeroItems()
-     {
-          string returnString = "";
-          foreach (ItemStack iStack in itemStacks)
-          {
-               if (iStack.currentQuantity != 0)
+               if (item.currentQuantity != 0)
                {
-                    returnString += iStack.ToString() + "   ";
+                    returnString += item.ToString() + "   ";
                }
           }
           return returnString;
      }
+     
 
 }
 

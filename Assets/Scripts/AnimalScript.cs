@@ -7,12 +7,18 @@ using Random = System.Random;
 public class AnimalScript : MonoBehaviour
 {
 
+     // Target def
+     public GameObject target;
+
+
      public NavMeshAgent agent;
      public AnimalType animalType;
      public string animalName;
      public bool isFleeing;
      private float movingSpeed;
+     private Vector3 movingVelocity;
      private Vector3 lastPosition;
+
 
      private GameObject animalLeavingPoint;
      
@@ -20,13 +26,21 @@ public class AnimalScript : MonoBehaviour
 
      private ArrayList spritesInitialRenderingOrder;
 
+     public GameObject workerTargetPoint;
+
 
 
      private void Awake()
      {
+
+          movingVelocity = new Vector3();
+
+          workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
+
+          movingVelocity = (transform.position - lastPosition) / Time.deltaTime;
           lastPosition = this.transform.position;
 
-          //Rotating the Worker's sprite for the NavMeshAgent
+          //Rotating the Deer's sprite for the NavMeshAgent
           transform.Find("deer").GetComponent<Transform>().Rotate(90, 0, 0);
           
           isFleeing = false;
@@ -62,7 +76,7 @@ public class AnimalScript : MonoBehaviour
           this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
 
 
-          if (CalculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
+          if (Utils.CalculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
           {
                Debug.Log("Animal has escaped.");
                Destroy(this.gameObject);
@@ -79,25 +93,22 @@ public class AnimalScript : MonoBehaviour
 
      public void CheckFacingSide()
      {
-          if (isFleeing)
-          {
-               Vector3 pointToFace = new Vector3();
-               pointToFace = animalLeavingPoint.transform.position;
 
-               if (pointToFace.x - transform.position.x > 0) // Facing Right
-               {
-                    Debug.Log("Deer is facing right.");
-                    this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
-               }
-               else // Facing Left
-               {
-                    Debug.Log("Deer is facing left.");
-                    this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
-                    
-               }
+          Vector3 pointToFace = new Vector3();
+          pointToFace = target.transform.position;
+
+          if (pointToFace.x - transform.position.x > 0 || movingVelocity.x > 0) // Facing Right
+          {
+               //Debug.Log("Deer is facing right.");
+               this.transform.FindChild("deer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+          }
+          else // Facing Left
+          {
+               //Debug.Log("Deer is facing left.");
+               this.transform.FindChild("deer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
 
           }
-          
+
      }
 
      public GameObject CreateAnimalCarcass()
@@ -154,6 +165,7 @@ public class AnimalScript : MonoBehaviour
      public void SetFleeing()
      {
           isFleeing = true;
+          target = animalLeavingPoint.transform.gameObject;
           agent.SetDestination(animalLeavingPoint.transform.position);
      }
      
@@ -167,9 +179,5 @@ public class AnimalScript : MonoBehaviour
           return animalName + "\n\tanimal type: " + animalType.ToString() + "\n\tis fleeing: " + isFleeing.ToString();
      }
 
-
-     private float CalculateDistance(GameObject from, GameObject to)
-     {
-          return Vector3.Distance(from.transform.position, to.transform.position);
-     }
+     
 }

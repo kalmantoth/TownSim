@@ -33,6 +33,7 @@ public class WorkerScript : MonoBehaviour
      public WorkerStatusType workerStatus;
 
      private float movingSpeed;
+     private Vector3 movingVelocity;
      private Vector3 lastPosition;
      private GameObject ground;
      public float distanceFromTarget;
@@ -48,17 +49,18 @@ public class WorkerScript : MonoBehaviour
      private Inventory inventory;
      private GameObject selector;
 
-     private FoodType drawFoodItemType;
-     private FoodType depositFoodItemType;
-
-
+     public ItemType drawItemType;
+     public int drawItemQuantity;
+     public ItemType depositItemType;
+     public int depositItemQuantity;
+     
      // Basic functions
-
      private void Awake()
      {
           workerSpritePath = ("SpriteContainer/WorkerBaseSprite");
 
           movingSpeed = -1000f;
+          movingVelocity = new Vector3();
           facingLeft = true;
 
           unitIsSelected = false;
@@ -93,12 +95,6 @@ public class WorkerScript : MonoBehaviour
 
 
           // Setting initial rendering order of the Worker's sprites
-          spritesInitialRenderingOrder = new ArrayList();
-          foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer), true))
-          {
-               spritesInitialRenderingOrder.Add(sprite.sortingOrder);
-               //Debug.Log("Init sprite name in list:" + sprite.gameObject.ToString());
-          }
           ModifyRenderingOrder();
 
           weaponFired = false;
@@ -109,23 +105,26 @@ public class WorkerScript : MonoBehaviour
 
           ChangeWorkerSprite(workerSpriteType);
 
-          inventory = new Inventory(10 , InventoryType.ALL);
-          inventory.ModifyInventory(FoodType.RAW_MEAT, 0);
+          inventory = new Inventory(10 , ItemGroup.ALL);
+          inventory.ModifyInventory(ItemType.WOOD, 0);
 
           selector = this.transform.Find("SpriteContainer/selector").gameObject;
 
           cooldownModifier = 1f;
 
-          drawFoodItemType = FoodType.NOTHING;
+          drawItemType = depositItemType = ItemType.NOTHING;
+          drawItemQuantity = depositItemQuantity = 0;
      }
+     
 
      void Update()
      {
           actionCooldown -= Time.deltaTime;
 
           movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
+          movingVelocity = (transform.position - lastPosition) / Time.deltaTime;
           lastPosition = transform.position;
-
+          
 
           // Animator update with the worker's current status and moving speed
           this.GetComponent<Animator>().SetInteger("WorkerStatus", (int)workerStatus);
@@ -136,22 +135,10 @@ public class WorkerScript : MonoBehaviour
 
           HandleActivities();
           LongIdleCheck();
-          /*
-          if (inventory.IsThereFullItemStack() && workerStatus != WorkerStatusType.ITEMDRAW)
-          {
-               if(inventory.FullItemStackItemType() == ItemType.RESOURCE)
-               {
-                    UnloadInventory(BuildingType.STORAGE);
-               }
-               else if (inventory.FullItemStackItemType() == ItemType.FOOD)
-               {
-                    UnloadInventory(BuildingType.GRANARY);
-               }
-          }
-          */
           // if (GlobVars.ingameClockInFloat % 0.25f == 0)
 
      }
+     
 
      private void LateUpdate()
      {
@@ -171,30 +158,32 @@ public class WorkerScript : MonoBehaviour
      {
           if (target != null)
           {
-               distanceFromTarget = CalculateDistance(this.gameObject, target);
+               distanceFromTarget = Utils.CalculateDistance(this.gameObject, target);
                targetLayer = LayerMask.LayerToName(target.layer);
                
                
                // Worker while target nothing and idle
                if (targetLayer.Equals("Ground"))
                {
-                    if (workerStatus != WorkerStatusType.IDLE && movingSpeed < 0.1f) workerStatus = WorkerStatusType.IDLE;
+                    if(workerStatus != WorkerStatusType.MOVING && movingSpeed > 0.1f ) workerStatus = WorkerStatusType.MOVING;
+                    else if (workerStatus != WorkerStatusType.IDLE && movingSpeed < 0.1f) workerStatus = WorkerStatusType.IDLE;
                }
                // Worker activity with buildings
-               else if (target.GetComponent<BuildingScript>() != null && CalculateDistance(selector, target) <= 3.5)
+               else if (target.GetComponent<BuildingScript>() != null && Utils.CalculateDistance(selector, target.GetComponent<BuildingScript>().workerTargetPoint) <= 3.5)
                {
                     // Worker unloading it's full item stacks to the correct building then returning to it's former activity
                     if (workerStatus == WorkerStatusType.ITEMDEPOSIT)
                     {
-                         if (depositFoodItemType != FoodType.NOTHING)
+                         if (depositItemType != ItemType.NOTHING)
                          {
-                              target.GetComponent<BuildingScript>().inventory.ModifyInventory(depositFoodItemType, -inventory.maxItemQuantity);
-                              inventory.ModifyInventory(depositFoodItemType, inventory.maxItemQuantity);
-                              depositFoodItemType = FoodType.NOTHING;
+                              target.GetComponent<BuildingScript>().inventory.ModifyInventory(depositItemType, depositItemQuantity);
+                              inventory.ModifyInventory(depositItemType, -depositItemQuantity);
+                              depositItemType = ItemType.NOTHING;
+                              depositItemQuantity = 0;
                          }
                          else
                          {
-                              this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
+                              this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.itemGroup);
                          }
 
                          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
@@ -202,20 +191,21 @@ public class WorkerScript : MonoBehaviour
                          savedTarget = null;
 
                     }
-                    // Worker load the wanted food type from granary and goes back to the active building
-                    else if (workerStatus == WorkerStatusType.ITEMDRAW && target.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY)
+                    // Worker load the wanted food type and goes back to the active building
+                    else if (workerStatus == WorkerStatusType.ITEMDRAW )
                     {
                          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
-                         target.GetComponent<BuildingScript>().inventory.ModifyInventory(drawFoodItemType, -inventory.maxItemQuantity);
-                         inventory.ModifyInventory(drawFoodItemType, inventory.maxItemQuantity);
+                         target.GetComponent<BuildingScript>().inventory.ModifyInventory(drawItemType, -drawItemQuantity);
+                         inventory.ModifyInventory(drawItemType, drawItemQuantity);
                          SetTarget(savedTarget);
                          savedTarget = null;
-                         drawFoodItemType = FoodType.NOTHING;
+                         drawItemType = ItemType.NOTHING;
+                         drawItemQuantity = 0;
                     }
                     // Worker manually unload it's full item stacks
-                    else if (target.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE || target.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY)
+                    else if (target.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE || target.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY || target.GetComponent<BuildingScript>().buildingType == BuildingType.TOWNHALL)
                     {
-                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
+                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.itemGroup);
                          SetTargetToGround();
                     }
                     // Worker while cooking at campfire
@@ -228,53 +218,54 @@ public class WorkerScript : MonoBehaviour
                          }
                          
                          CookActivity();
-                         
                     }
+                    else if (target.GetComponent<BuildingScript>().buildingType == BuildingType.FARM)
+                    {
+                         if (workerStatus != WorkerStatusType.FARMING)
+                         {
+                              agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+                              workerStatus = WorkerStatusType.FARMING;
+                         }
+                         
+                         FarmActivity();
+                         //CookActivity();
+                    }
+
                }
                // Worker while collecting resources
-               else if (targetLayer.Equals("Resources") && CalculateDistance(selector, target) <= 3.5f)
+               else if (targetLayer.Equals("Resources") && Utils.CalculateDistance(selector, target.GetComponent<ResourceScript>().workerTargetPoint) <= 3.5f)
                {
-                    if(workerStatus != WorkerStatusType.WOOD_CHOPPING || workerStatus != WorkerStatusType.STONE_MINING || workerStatus != WorkerStatusType.GATHERING) { 
+                    if(workerStatus != WorkerStatusType.WOOD_CHOPPING || workerStatus != WorkerStatusType.STONE_MINING || workerStatus != WorkerStatusType.GATHERING || workerStatus != WorkerStatusType.FARMING) { 
                          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
                          target.GetComponent<ResourceScript>().AddToResourceUserList(this.gameObject); // Add the worker to the resource user list
 
-                         switch (target.GetComponent<ResourceScript>().resourceType)
+                         switch (target.GetComponent<ResourceScript>().itemType)
                          {
-                              case ResourceType.WOOD:
+                              case ItemType.WOOD:
                                    workerStatus = WorkerStatusType.WOOD_CHOPPING;
                                    break;
-                              case ResourceType.STONE:
+                              case ItemType.STONE:
                                    workerStatus = WorkerStatusType.STONE_MINING;
                                    break;
-                              case ResourceType.NOTHING:
+                              case ItemType.BERRY:
+                              case ItemType.RAW_MEAT:
+                              case ItemType.RAW_FISH:
+                              case ItemType.NOTHING:
                                    workerStatus = WorkerStatusType.GATHERING;
+                                   break;
+                              case ItemType.WHEAT:
+                              case ItemType.POTATO:
+                                   workerStatus = WorkerStatusType.FARMING;
                                    break;
                               default:
                                    break;
                          }
-                         switch (target.GetComponent<ResourceScript>().foodType)
-                         {
-                              case FoodType.BERRY:
-                                   workerStatus = WorkerStatusType.GATHERING;
-                                   break;
-                              case FoodType.RAW_MEAT:
-                                   workerStatus = WorkerStatusType.GATHERING;
-                                   break;
-                              case FoodType.RAW_FISH:
-                                   workerStatus = WorkerStatusType.GATHERING;
-                                   break;
-                              case FoodType.NOTHING:
-                                   break;
-                              default:
-                                   break;
-                         }
-
                     }
 
                     CollectResourceActivity();
                }
                // Worker while hunting
-               else if (targetLayer.Equals("Animals") && CalculateDistance(selector, target) <= 15)
+               else if (targetLayer.Equals("Animals") && Utils.CalculateDistance(selector, target.GetComponent<AnimalScript>().workerTargetPoint) <= 15)
                {
                     if(workerStatus != WorkerStatusType.HUNTING)
                     {
@@ -288,130 +279,109 @@ public class WorkerScript : MonoBehaviour
           }
      }
      
+     public void FarmActivity()
+     {
+          if (workerStatus == WorkerStatusType.FARMING)
+          {
+
+               if (target.GetComponent<FarmScript>().farmIsReadyToHarvest)
+               {
+                    target.GetComponent<ResourceScript>().AddToResourceUserList(this.gameObject);
+                    CollectResourceActivity();
+
+               }
+
+
+               if (target.GetComponent<FarmScript>().farmIsReadyToGrowPlants)
+               {
+                    Debug.Log("The farm is growing now.");
+                    target.GetComponent<FarmScript>().StartPlantGrowProgress();
+               }
+
+               if (target.GetComponent<FarmScript>().IsTheFarmNotAvailable()) SetTargetToGround();
+          }
+     }
+
+
      public void CookActivity()
      {
           if(workerStatus == WorkerStatusType.COOKING)
           {
-               if (inventory.IsThereFullItemStack())
+               ItemType campfireSelectedFoodType = target.GetComponent<BuildingScript>().selectedActiveItemType;
+
+
+               if (inventory.IsItemTypeFull(inventory.GetFoodItemTypeWhich(true)))
                {
-
-                    if (inventory.IsFoodTypeItemStackFull(FoodType.COOKED_MEAT))
-                    {
-                         UnloadInventory(BuildingType.GRANARY, FoodType.COOKED_MEAT);
-                    }
-                    else if (inventory.IsFoodTypeItemStackFull(FoodType.COOKED_FISH))
-                    {
-                         UnloadInventory(BuildingType.GRANARY, FoodType.COOKED_FISH);
-                    }
-                    target.GetComponent<BuildingScript>().isBuildingInUse = false;
-
+                    UnloadInventory(inventory.GetFoodItemTypeWhich(true));
                }
 
-               if (inventory.GetItemQuantity(FoodType.RAW_MEAT) > 0 || inventory.GetItemQuantity(FoodType.RAW_FISH) > 0)
+               if (GlobVars.RAW_FOOD == 0 && !inventory.IsThereFoodWhich(true) && !inventory.IsThereFoodWhich(false))
                {
-                    if (actionCooldown <= 0.0f)
+                    Debug.Log("Could not found any raw food to cook.");
+                    SetTargetToGround();
+               }
+               else if (campfireSelectedFoodType == ItemType.ANYTHING)
+               {
+                    if (!inventory.IsThereFoodWhich(false))
                     {
-                         actionCooldown = 3f * cooldownModifier;
-                         if (inventory.GetItemQuantity(FoodType.RAW_MEAT) > 0)
+                         target.GetComponent<BuildingScript>().isBuildingInUse = false;
+                         if(GlobVars.FirstEdibleFood() != ItemType.NOTHING)
                          {
-                              inventory.ModifyInventory(FoodType.RAW_MEAT, -1);
-                              inventory.ModifyInventory(FoodType.COOKED_MEAT, +1);
+                              LoadInventory(GlobVars.FirstEdibleFood());
                          }
-                         else if (inventory.GetItemQuantity(FoodType.RAW_FISH) > 0)
-                         {
-                              inventory.ModifyInventory(FoodType.RAW_FISH, -1);
-                              inventory.ModifyInventory(FoodType.COOKED_FISH, +1);
-                         }
+                         
                     }
-                    target.GetComponent<BuildingScript>().isBuildingInUse = true;
-
-               }
-               else
-               {
-                    target.GetComponent<BuildingScript>().isBuildingInUse = false;
-                    LoadInventory(BuildingType.GRANARY, FoodType.RAW_MEAT);
-               }
-          }
-          
-     }
-
-     public void LoadInventory(BuildingType buildingType, FoodType foodType = FoodType.NOTHING)
-     {
-          GameObject closestBuildingToLoad = null;
-          if (workerStatus != WorkerStatusType.ITEMDRAW)
-          {
-               float minDistance = float.MaxValue;
-               foreach (GameObject building in GlobVars.buildingList)
-               {
-                    if (building.GetComponent<BuildingScript>().buildingType == buildingType)
+                    else
                     {
-                         if (building.GetComponent<BuildingScript>().inventory.GetItemQuantity(foodType) >= inventory.maxItemQuantity)
+                         target.GetComponent<BuildingScript>().isBuildingInUse = true;
+                         if (actionCooldown <= 0.0f)
                          {
-                              if (CalculateDistance(this.gameObject, building) < minDistance)
+                              actionCooldown = 3f * cooldownModifier;
+                              if (inventory.GetFirstFoodWhich(false) != ItemType.NOTHING)
                               {
-                                   minDistance = CalculateDistance(this.gameObject, building);
-                                   closestBuildingToLoad = building;
+                                   ItemType foodToCook = inventory.GetFirstFoodWhich(false);
+                                   inventory.ModifyInventory(foodToCook, -1);
+                                   inventory.ModifyInventory(Utils.SpecifyCookedPairOfRawFood(foodToCook), +1);
                               }
                          }
+                         
                     }
                }
-
-               if (closestBuildingToLoad == null)
+               else if (campfireSelectedFoodType == ItemType.POTATO || campfireSelectedFoodType == ItemType.RAW_MEAT || campfireSelectedFoodType == ItemType.RAW_FISH)
                {
-                    Debug.Log("No" + buildingType.ToString() + "on the map that contains " + inventory.maxItemQuantity + " " + foodType.ToString() );
-                    SetTargetToGround();
-               }
-               else
-               {
-                    savedTarget = target;
-                    if(foodType != FoodType.NOTHING) drawFoodItemType = foodType;
+                    ItemType foodToCook = target.GetComponent<BuildingScript>().selectedActiveItemType;
+                    if (inventory.GetItemQuantity(target.GetComponent<BuildingScript>().selectedActiveItemType) <= 0)
+                    {
+                         target.GetComponent<BuildingScript>().isBuildingInUse = false;
+                         LoadInventory(foodToCook);
+                    }
+                    else
+                    {
+                         target.GetComponent<BuildingScript>().isBuildingInUse = true;
 
-                    SetTarget(closestBuildingToLoad, WorkerStatusType.ITEMDRAW);
+                         if (actionCooldown <= 0.0f)
+                         {
+                              actionCooldown = 3f * cooldownModifier;
+                              if (inventory.GetFirstFoodWhich(false) != ItemType.NOTHING)
+                              {
+                                   inventory.ModifyInventory(foodToCook, -1);
+                                   inventory.ModifyInventory(Utils.SpecifyCookedPairOfRawFood(foodToCook), +1);
+                              }
+                         }
+
+                    }
                }
+               
           }
           
      }
 
-     // Kipakolás során meg kell nézni, hogy milyen tárgy van stack van tele és a legközelebbi azt a tárgyat még tárolható
-
-     public void UnloadInventory(BuildingType buildingType, FoodType foodType = FoodType.NOTHING)
-     {
-          GameObject closestBuildingToUnload  = null;
-          if(workerStatus != WorkerStatusType.ITEMDEPOSIT) { 
-
-               float minDistance = float.MaxValue;
-               foreach (GameObject building in GlobVars.buildingList)
-               {
-                    if (building.GetComponent<BuildingScript>().buildingType == buildingType)
-                    {
-                         if (CalculateDistance(this.gameObject, building) < minDistance)
-                         {
-                              minDistance = CalculateDistance(this.gameObject, building);
-                              closestBuildingToUnload = building;
-                         }
-                    }
-               }
-
-               if (closestBuildingToUnload == null)
-               {
-                    Debug.Log("No" + buildingType.ToString() + "on the map.");
-                    SetTargetToGround();
-               }
-               else
-               {
-                    savedTarget = target;
-                    if (foodType != FoodType.NOTHING) depositFoodItemType = foodType;
-
-                    SetTarget(closestBuildingToUnload, WorkerStatusType.ITEMDEPOSIT);
-               }
-          }
-     }
      
      public void SetTarget(GameObject target, WorkerStatusType workerStatusType = WorkerStatusType.MOVING)
      {
           agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
-          HandlePreviousTarget();
           this.previousTarget = this.target;
+          HandlePreviousTarget();
           this.target = target;
 
 
@@ -421,7 +391,16 @@ public class WorkerScript : MonoBehaviour
           }
           else // Agent moves to the target
           {
-               agent.SetDestination(target.gameObject.transform.position);
+               if(target.transform.FindChild("WorkerTargetPoint").gameObject != null)
+               {
+                    agent.SetDestination(target.transform.FindChild("WorkerTargetPoint").gameObject.transform.position);
+               }
+               else
+               {
+                    agent.SetDestination(target.gameObject.transform.position);
+               }
+
+               
           }
 
           workerStatus = workerStatusType;
@@ -456,21 +435,9 @@ public class WorkerScript : MonoBehaviour
           {
                actionCooldown = 2f * cooldownModifier;
 
-               if(target.GetComponent<ResourceScript>().resourceType != ResourceType.NOTHING && target.GetComponent<ResourceScript>().foodType == FoodType.NOTHING)
+               if(target.GetComponent<ResourceScript>().itemType != ItemType.NOTHING)
                {
-                    if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().resourceType, collectValue) == false)
-                    {
-                         target.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
-                         SetTargetToGround();
-                    }
-                    else
-                    {
-                         target.GetComponent<ResourceScript>().DecreaseCurrentResourceAmount(collectValue);
-                    }
-               }
-               else if (target.GetComponent<ResourceScript>().resourceType == ResourceType.NOTHING && target.GetComponent<ResourceScript>().foodType != FoodType.NOTHING)
-               {
-                    if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().foodType, collectValue) == false)
+                    if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().itemType, collectValue) == false)
                     {
                          target.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
                          SetTargetToGround();
@@ -482,18 +449,124 @@ public class WorkerScript : MonoBehaviour
                }
           }
 
-          if (inventory.IsThereFullItemStack())
+          if (this.inventory.IsItemTypeFull(target.GetComponent<ResourceScript>().itemType))   // If the resource that I'm collecting is full
           {
-               if(inventory.FullItemStackItemType() == ItemType.RESOURCE)
+               UnloadInventory(target.GetComponent<ResourceScript>().itemType);
+          }
+     }
+
+     public void LoadInventory(ItemType itemType = ItemType.NOTHING)
+     {
+          GameObject closestBuildingToLoad = null;
+          if (workerStatus != WorkerStatusType.ITEMDRAW)
+          {
+               float minDistance = float.MaxValue;
+               int loadQuantity = 0;
+               foreach (GameObject building in GlobVars.buildingList)
                {
-                    UnloadInventory(BuildingType.STORAGE);
+                    bool isBuildingLoadAble = false;
+                    if (Utils.SpecifyItemGroup(itemType) == building.GetComponent<BuildingScript>().itemGroup || building.GetComponent<BuildingScript>().itemGroup == ItemGroup.ALL)
+                    {
+                         if (building.GetComponent<BuildingScript>().inventory.CanModifyItemQuantity(itemType, -this.inventory.GetMaxItemQuantity(itemType)))
+                         {
+                              loadQuantity = this.inventory.GetMaxItemQuantity(itemType);
+                              isBuildingLoadAble = true;
+                         }
+                         else if (building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(itemType) != 0 && building.GetComponent<BuildingScript>().inventory.CanModifyItemQuantity(itemType, building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(itemType)))
+                         {
+                              loadQuantity = building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(itemType);
+                              isBuildingLoadAble = true;
+                         }
+
+                         if (isBuildingLoadAble)
+                         {
+                              if (Utils.CalculateDistance(this.gameObject, building) < minDistance)
+                              {
+                                   minDistance = Utils.CalculateDistance(this.gameObject, building);
+                                   closestBuildingToLoad = building;
+                              }
+                         }
+
+                    }
                }
-               else if (inventory.FullItemStackItemType() == ItemType.FOOD)
+
+               if (closestBuildingToLoad == null)
                {
-                    UnloadInventory(BuildingType.GRANARY);
+                    Debug.Log("No building on the map that can contain ENOUGH " + itemType.ToString());
+                    SetTargetToGround();
+               }
+               else
+               {
+                    savedTarget = target;
+                    if (itemType != ItemType.NOTHING)
+                    {
+                         drawItemType = itemType;
+                         drawItemQuantity = loadQuantity;
+                    }
+
+                    SetTarget(closestBuildingToLoad, WorkerStatusType.ITEMDRAW);
+               }
+          }
+
+     }
+     
+     
+     public void UnloadInventory(ItemType itemType = ItemType.NOTHING)
+     {
+          GameObject closestBuildingToUnload = null;
+          if (workerStatus != WorkerStatusType.ITEMDEPOSIT)
+          {
+               float minDistance = float.MaxValue;
+               int unloadQuantity = 0;
+               foreach (GameObject building in GlobVars.buildingList)
+               {
+                    bool isBuildingUnloadAble = false;
+                    if (Utils.SpecifyItemGroup(itemType) == building.GetComponent<BuildingScript>().itemGroup || building.GetComponent<BuildingScript>().itemGroup == ItemGroup.ALL)
+                    {
+                         if (building.GetComponent<BuildingScript>().inventory.CanModifyItemQuantity(itemType, this.inventory.GetItemQuantity(itemType)))
+                         {
+                              unloadQuantity = this.inventory.GetItemQuantity(itemType);
+                              isBuildingUnloadAble = true;
+                         }
+                         else if (building.GetComponent<BuildingScript>().inventory.GetItemQuantityToReachMax(itemType) != 0 && building.GetComponent<BuildingScript>().inventory.CanModifyItemQuantity(itemType, building.GetComponent<BuildingScript>().inventory.GetItemQuantityToReachMax(itemType)))
+                         {
+                              unloadQuantity = building.GetComponent<BuildingScript>().inventory.GetItemQuantityToReachMax(itemType);
+                              isBuildingUnloadAble = true;
+                         }
+
+                         if (isBuildingUnloadAble)
+                         {
+                              if (Utils.CalculateDistance(this.gameObject, building) < minDistance)
+                              {
+                                   minDistance = Utils.CalculateDistance(this.gameObject, building);
+                                   closestBuildingToUnload = building;
+                              }
+                         }
+                         
+
+                    }
+               }
+
+               if (closestBuildingToUnload == null)
+               {
+                    Debug.Log("No building on the map that can contain MORE " + itemType.ToString());
+                    SetTargetToGround();
+               }
+               else
+               {
+                    savedTarget = target;
+                    if (itemType != ItemType.NOTHING)
+                    {
+                         depositItemQuantity = unloadQuantity;
+                         depositItemType = itemType;
+                    }
+
+                    SetTarget(closestBuildingToUnload, WorkerStatusType.ITEMDEPOSIT);
                }
           }
      }
+
+     
 
      public void SetCooldownModifier (float modifierValue)
      {
@@ -579,6 +652,7 @@ public class WorkerScript : MonoBehaviour
      {
           agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
           target = ground;
+          workerStatus = WorkerStatusType.IDLE;
      }
 
      public void OnMouseDown()
@@ -615,11 +689,20 @@ public class WorkerScript : MonoBehaviour
      public void ModifyRenderingOrder()
      {
 
+          if (spritesInitialRenderingOrder == null)
+          {
+               spritesInitialRenderingOrder = new ArrayList();
+               foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer), true))
+               {
+                    spritesInitialRenderingOrder.Add(sprite.sortingOrder);
+                    //Debug.Log("Init sprite name in list:" + sprite.gameObject.ToString());
+               }
+          }
+
           int i = 0;
           // Setting render sorting order by finding gameobject's global position;
           foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer)))
           {
-
                int localRenderingOrderInSprite = -(int)spritesInitialRenderingOrder[i];
                sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) + localRenderingOrderInSprite);
                i++;
@@ -636,7 +719,7 @@ public class WorkerScript : MonoBehaviour
                else pointToFace = target.transform.position;
 
 
-               if (pointToFace.x - transform.position.x > 0) // Facing Right
+               if (pointToFace.x - transform.position.x > 0 || movingVelocity.x > 0) // Facing Right
                {
                     this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
                     facingLeft = false;
@@ -685,7 +768,7 @@ public class WorkerScript : MonoBehaviour
      public string ToString()
      {
 
-          string workerString = "Worker" + "\n\t is selected: " + unitIsSelected.ToString() + "\n\t status: " + workerStatus.ToString() + "\n\t inventory: " + inventory.ToStringNoZeroItems();
+          string workerString = "Worker" + "\n\t is selected: " + unitIsSelected.ToString() + "\n\t status: " + workerStatus.ToString() + "\n\t inventory: " + inventory.ToString();
 
           if(targetLayer.Equals("Ground")) {
                workerString += "\n\t target: None";
@@ -705,10 +788,5 @@ public class WorkerScript : MonoBehaviour
 
      // Assist functions
 
-     private float CalculateDistance(GameObject from, GameObject to)
-     {
-          return Vector3.Distance(from.transform.position, to.transform.position);
-     }
      
-
 }
