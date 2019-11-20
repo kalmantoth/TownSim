@@ -15,7 +15,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &1457592288162265223
 Transform:
@@ -97,7 +97,7 @@ GameObject:
   m_TagString: Object
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &8440530708697859628
 Transform:
@@ -131,7 +131,10 @@ MonoBehaviour:
   buildingName: Storage
   isBuildingInUse: 0
   itemGroup: 0
+  selectedActiveItemType: 0
   workerTargetPoint: {fileID: 0}
+  menuShow: 0
+  menuShowPosition: {x: 0, y: 0, z: 0}
 --- !u!208 &2998341580998658420
 NavMeshObstacle:
   m_ObjectHideFlags: 0
@@ -175,7 +178,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &264615295802132373
 Transform:

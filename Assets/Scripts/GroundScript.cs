@@ -18,14 +18,14 @@ public class GroundScript : MonoBehaviour
 
      public void OnMouseDown()
      {
-
           GlobVars.UnselectWorkers();
           GlobVars.infoPanelGameObject = this.gameObject;
           
      }
 
-     public string ToString()
+     public override string ToString()
      {
           return "Just grass Pal! Nothing else to see.";
      }
+     
 }

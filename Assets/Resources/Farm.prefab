@@ -15,7 +15,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &1639392407689794208
 Transform:
@@ -94,7 +94,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &504695104216776934
 Transform:
@@ -129,7 +129,7 @@ GameObject:
   m_TagString: Object
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &8635910904642694155
 Transform:
@@ -163,7 +163,10 @@ MonoBehaviour:
   buildingName: Farm
   isBuildingInUse: 0
   itemGroup: 0
+  selectedActiveItemType: 0
   workerTargetPoint: {fileID: 0}
+  menuShow: 0
+  menuShowPosition: {x: 0, y: 0, z: 0}
 --- !u!114 &7711762922249463435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,8 +181,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   farmType: 0
   stage: 0
+  maxStage: 0
   menuShow: 0
   menuShowPosition: {x: 0, y: 0, z: 0}
+  plantGrowTimer: 0
+  plantGrowTimerInit: 0
+  plantFullGrowTime: 0
+  farmIsReadyToGrowPlants: 0
+  farmIsReadyToHarvest: 0
+  plantGrowingInProgress: 0
 --- !u!114 &8767431650902999351
 MonoBehaviour:
   m_ObjectHideFlags: 0

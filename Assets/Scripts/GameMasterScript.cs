@@ -9,12 +9,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using Random = System.Random;
 
-
-
-public enum WorkerStatusType { IDLE = 1, MOVING = 2 , WOOD_CHOPPING = 3, STONE_MINING = 4, FISHING = 5, FARMING = 6, CONSTRUCING = 7, GATHERING = 8, HUNTING = 9, ITEMDEPOSIT = 10, ITEMDRAW = 11, COOKING = 12 }
-public enum BuildingType { HOUSE, TOWNHALL, STORAGE, CAMPFIRE, GRANARY, FARM, MILLBAKERY, TRADINGPOST}
-public enum FarmType { NOTHING, WHEAT, POTATO}
-public enum AnimalType { DEER }
 public enum Season { SPRING, SUMMER, AUTUMN, WINTER }
 
 public static class Utils
@@ -24,14 +18,13 @@ public static class Utils
           return Vector3.Distance(from.transform.position, to.transform.position);
      }
      
-     public static ItemGroup SpecifyItemGroup(ItemType itemType)
+     public static InventoryType SpecifyInventoryType(ItemType itemType)
      {
           switch (itemType)
           {
                case ItemType.WOOD:
                case ItemType.STONE:
-               case ItemType.GOLD:
-                    return ItemGroup.RESOURCE;
+                    return InventoryType.RESOURCE;
                case ItemType.RAW_FISH:
                case ItemType.RAW_MEAT:
                case ItemType.POTATO:
@@ -41,24 +34,45 @@ public static class Utils
                case ItemType.BERRY:
                case ItemType.COOKED_FISH:
                case ItemType.COOKED_MEAT:
-                    return ItemGroup.FOOD;
+                    return InventoryType.FOOD;
                default:
-                    return ItemGroup.NOTHING;
+                    return InventoryType.EMPTY;
           }
      }
 
-     public static ItemType SpecifyCookedPairOfRawFood(ItemType rawFoodType)
+     public static ItemType SpecifyDonePairOfUndoneFood(ItemType foodType, bool reverse = false)
      {
-          switch (rawFoodType)
+          if (!reverse)
           {
-               case ItemType.RAW_FISH:
-                    return ItemType.COOKED_FISH;
-               case ItemType.RAW_MEAT:
-                    return ItemType.COOKED_MEAT;
-               case ItemType.POTATO:
-                    return ItemType.BAKED_POTATO;
-               default:
-                    return ItemType.NOTHING;
+               switch (foodType)
+               {
+                    case ItemType.RAW_FISH:
+                         return ItemType.COOKED_FISH;
+                    case ItemType.RAW_MEAT:
+                         return ItemType.COOKED_MEAT;
+                    case ItemType.POTATO:
+                         return ItemType.BAKED_POTATO;
+                    case ItemType.WHEAT:
+                         return ItemType.BREAD;
+                    default:
+                         return ItemType.NOTHING;
+               }
+          }
+          else
+          {
+               switch (foodType)
+               {
+                    case ItemType.COOKED_FISH:
+                         return ItemType.RAW_FISH;
+                    case ItemType.COOKED_MEAT:
+                         return ItemType.RAW_MEAT;
+                    case ItemType.BAKED_POTATO:
+                         return ItemType.POTATO;
+                    case ItemType.BREAD:
+                         return ItemType.WHEAT;
+                    default:
+                         return ItemType.NOTHING;
+               }
           }
      }
 
@@ -126,9 +140,9 @@ public static class Utils
 
      public static GameObject SetWorkerTargetPoint(GameObject gameObject)
      {
-          if (gameObject.transform.FindChild("WorkerTargetPoint") != null)
+          if (gameObject.transform.Find("WorkerTargetPoint") != null)
           {
-               return gameObject.transform.FindChild("WorkerTargetPoint").gameObject;
+               return gameObject.transform.Find("WorkerTargetPoint").gameObject;
           }
           else
           {
@@ -167,6 +181,15 @@ public static class Utils
           return Encapsulator.Contains(Encapsulating.min) && Encapsulator.Contains(Encapsulating.max);
      }
 
+     public static bool IsMouseInsideOfTheScreen()
+     {
+          if (Input.mousePosition.x < 0 || Input.mousePosition.y < 0 || Input.mousePosition.x > Screen.width || Input.mousePosition.y > Screen.height)
+          {
+               return false;
+          }
+          else return true;
+     }
+
 }
 
 public static class GlobVars
@@ -175,22 +198,93 @@ public static class GlobVars
      public static GameObject infoPanelGameObject = null;
      public static int ingameClock = 0;
      public static float ingameClockInFloat = 0f;
-     public static List<GameObject> workerList = new List<GameObject>();
-     public static List<GameObject> buildingList = new List<GameObject>();
-     public static int selectedWorkerCount = 0;
+     private static List<GameObject> workers = new List<GameObject>();
+     private static List<GameObject> selectedWorkers = new List<GameObject>();
+     public static List<GameObject> storageBuildings = new List<GameObject>(); // should change it to private WIP
+     private static List<Item> unlockedItems = new List<Item>();
+     private static List<Item> storedItems = new List<Item>();
+     public static bool isTradingPanelOpen;
      public static Season season = Season.SUMMER;
      public static bool firstDayOfSeason;
-
-
-
-     public static void AddWorkerToWorkerList(GameObject worker)
+     public static bool tradingIsEnabled = false;
+     
+     public static Item[] GetStoredItems()
      {
-          workerList.Add(worker);
+          return storedItems.ToArray();
+     }
+
+     public static void SetStoredItems()
+     {
+          storedItems.AddRange(unlockedItems);
+     }
+
+     public static void RecountStoredItems()
+     {
+          foreach(Item item in storedItems)
+          {
+               item.currentQuantity = 0;
+               item.maxQuantity = 0;
+          }
+
+          foreach (GameObject storageBuilding in storageBuildings)
+          {
+               BuildingScript bS = storageBuilding.GetComponent<BuildingScript>();
+
+               foreach (Item item in storedItems)
+               {
+                    foreach (Item buildingStorageItem in bS.inventory.items)
+                    {
+                         if(item.itemType == buildingStorageItem.itemType && buildingStorageItem.maxQuantity > 0)
+                         {
+                              item.currentQuantity += buildingStorageItem.currentQuantity;
+                              item.maxQuantity += buildingStorageItem.maxQuantity;
+                         }
+                    }
+               }
+          }
+     }
+
+     
+     public static int GetGlobalStoredItemQuantity(ItemType itemType)
+     {
+          int quantity = 0;
+          foreach (GameObject building in storageBuildings)
+          {
+               BuildingScript bs = building.GetComponent<BuildingScript>();
+               if (bs.inventory != null)
+               {
+                    quantity += bs.inventory.GetItemCurrentQuantity(itemType);
+               }
+
+
+          }
+          return quantity;
+     }
+
+     public static void AddUnlockedItem(Item item)
+     {
+          unlockedItems.Add(item);
+          //Debug.Log(item.itemName + " has been unlocked...");
+     }
+
+     public static Item[] GetUnlockedItems()
+     {
+          return unlockedItems.ToArray();
+     }
+     
+     public static GameObject[] GetWorkers()
+     {
+          return workers.ToArray();
+     }
+     
+     public static void AddWorkerToWorkers(GameObject worker)
+     {
+          if(!workers.Contains(worker)) workers.Add(worker);
      }
 
      public static void UnselectWorkers()
      {
-          foreach (GameObject worker in workerList)
+          foreach (GameObject worker in workers)
           {
                if(worker.GetComponent<WorkerScript>().unitIsSelected)
                {
@@ -199,11 +293,26 @@ public static class GlobVars
           }
      }
 
+     public static GameObject[] GetSelectedWorkers()
+     {
+          return selectedWorkers.ToArray();
+     }
+
+     public static void AddWorkerToSelectedWorkers(GameObject worker)
+     {
+          if (!selectedWorkers.Contains(worker)) selectedWorkers.Add(worker);
+     }
+
+     public static void RemoveWorkerFromSelectedWorkers(GameObject worker)
+     {
+          selectedWorkers.Remove(worker);
+     }
+
      public static ItemType FirstEdibleFood()
      {
-          foreach (GameObject building in buildingList)
+          foreach (GameObject building in storageBuildings)
           {
-               if(building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.itemGroup == ItemGroup.ALL || building.GetComponent<BuildingScript>().inventory.itemGroup == ItemGroup.FOOD))
+               if(building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.FOOD))
                {
                     return building.GetComponent<BuildingScript>().inventory.GetFirstFoodWhich(false);
                }
@@ -211,6 +320,75 @@ public static class GlobVars
           }
           return ItemType.NOTHING;
      }
+
+     public static void ModifyStoredItemQuantity(ItemType itemType, int modValue)
+     {
+          int value = modValue; // vigyázni mert decraseről állítom simára tehát + - konverzióra figyelni kell
+
+          foreach (GameObject building in storageBuildings)
+          {
+               BuildingScript bScript = building.GetComponent<BuildingScript>();
+               if (bScript.inventory != null && (bScript.inventory.inventoryType == Utils.SpecifyInventoryType(itemType) || bScript.inventory.inventoryType == InventoryType.ALL))
+               {
+                    if (value == 0) break;
+
+                    if (bScript.inventory.GetItemCurrentQuantity(itemType) + value >= 0)
+                    {
+                         bScript.inventory.ModifyInventory(itemType, value);
+                         Debug.Log(bScript.gameObject.name + " modified " + value + " " + itemType);
+                         value -= value;
+                         Debug.Log("Left item quantity to modify " + value + " " + itemType);
+                    }
+                    else
+                    {
+                         value = value - bScript.inventory.GetItemCurrentQuantity(itemType);
+                         bScript.inventory.ModifyInventory(itemType, -bScript.inventory.GetItemCurrentQuantity(itemType));
+                         Debug.Log(bScript.gameObject.name + " modified " + bScript.inventory.GetItemCurrentQuantity(itemType) + " " + itemType);
+                         Debug.Log("Left item quantity to modify " + value + " " + itemType);
+                    }
+
+                    RecountStoredItemsToTopUIBar();
+                    RecountStoredItems();
+               }
+          }
+     }
+
+     public static void RecountStoredItemsToTopUIBar() // Should rework this accord to the new RecountStoredItems() WIP TODO
+     {
+          int wood, stone, food, rawFood;
+          wood = stone = food = rawFood = 0;
+          foreach (GameObject building in storageBuildings)
+          {
+               BuildingScript bScript = building.GetComponent<BuildingScript>();
+
+               if (bScript.buildingType == BuildingType.STORAGE || bScript.buildingType == BuildingType.TOWNHALL)
+               {
+                    wood += bScript.inventory.GetItemCurrentQuantity(ItemType.WOOD);
+                    stone += bScript.inventory.GetItemCurrentQuantity(ItemType.STONE);
+               }
+
+               if (bScript.buildingType == BuildingType.GRANARY || bScript.buildingType == BuildingType.TOWNHALL)
+               {
+                    food += bScript.inventory.GetItemCurrentQuantity(ItemType.BERRY);
+                    food += bScript.inventory.GetItemCurrentQuantity(ItemType.COOKED_MEAT);
+                    food += bScript.inventory.GetItemCurrentQuantity(ItemType.COOKED_FISH);
+                    food += bScript.inventory.GetItemCurrentQuantity(ItemType.BAKED_POTATO);
+                    food += bScript.inventory.GetItemCurrentQuantity(ItemType.BREAD);
+                    rawFood += bScript.inventory.GetItemCurrentQuantity(ItemType.RAW_MEAT);
+                    rawFood += bScript.inventory.GetItemCurrentQuantity(ItemType.RAW_FISH);
+                    rawFood += bScript.inventory.GetItemCurrentQuantity(ItemType.POTATO);
+                    rawFood += bScript.inventory.GetItemCurrentQuantity(ItemType.WHEAT);
+
+               }
+          }
+
+          //Debug.Log(wood + stone + food + rawFood);
+          WOOD = wood;
+          STONE = stone;
+          FOOD = food;
+          RAW_FOOD = rawFood;
+     }
+     
 
 }
 
@@ -226,7 +404,11 @@ public class GameMasterScript : MonoBehaviour
      public Text InfoPanelTargetDataText;
      public Text GoalText;
      public GameObject BuildingPanel;
+     public GameObject TradingPanel;
+     public GameObject InfoPanel;
      public Button BuildingPanelVisibilityButton;
+     public Button TradingPanelVisibilityButton;
+     public Button InfoPanelVisibilityButton;
      public Dropdown BuildingTypeDropdown;
      public Button TownLevelUpButton;
      
@@ -239,10 +421,8 @@ public class GameMasterScript : MonoBehaviour
 
      private bool isBuildingModeOn;
 
-     public GameObject animalSpawnPoint1;
-     public GameObject animalSpawnPoint2;
-     public GameObject animalDestination1;
-     public GameObject animalDestination2;
+     public GameObject[] animalSpawnPoints;
+     public GameObject[] animalSpawnDestinations;
 
      private GameObject buildingGrid;
 
@@ -259,11 +439,21 @@ public class GameMasterScript : MonoBehaviour
      private Transform mapBottomLeftCorner;
      private Bounds mapBounds;
 
+     public bool showFpsMeter;
+     private float deltaTime;
+
      void Awake()
      {
+          // Application optimizing
+          Application.targetFrameRate = 60;
+          deltaTime = 0.0f;
+          showFpsMeter = false;
+
+
+
           // Map Corner settings
-          mapTopRightCorner = this.gameObject.transform.FindChild("MapTopRightCorner").gameObject.transform;
-          mapBottomLeftCorner = this.gameObject.transform.FindChild("MapBottomLeftCorner").gameObject.transform;
+          mapTopRightCorner = this.gameObject.transform.Find("MapTopRightCorner").gameObject.transform;
+          mapBottomLeftCorner = this.gameObject.transform.Find("MapBottomLeftCorner").gameObject.transform;
           mapBounds = Utils.GetBoundsOfTwoTransformPosition(mapTopRightCorner.position, mapBottomLeftCorner.position);
           
 
@@ -277,15 +467,13 @@ public class GameMasterScript : MonoBehaviour
 
           ingameClockInFloat = 0f;
 
-          foodConsumptionTimer = foodConsumptionTimerInitial = 10f;
+          foodConsumptionTimer = foodConsumptionTimerInitial = dateIncreaseTimerInitial * 7; // Every week the food decrease
 
           // First spawn of animal
           animalSpawnTimer = 1f;
 
           // Building mode settings
           isBuildingModeOn = false;
-
-          
 
           // Default UI settings
 
@@ -308,37 +496,44 @@ public class GameMasterScript : MonoBehaviour
           TownLevelUpButton.onClick.AddListener(TownLevelUp);
 
           BuildingPanelVisibilityButton.onClick.AddListener(OpenBuildingPanel);
+          TradingPanelVisibilityButton.onClick.AddListener(OpenTradingPanel);
+          InfoPanelVisibilityButton.onClick.AddListener(OpenInfoPanel);
 
 
 
-          
 
-          FindAllPlacedBuilding();
+          FindAllPlacedStorageBuilding();
 
           isMouseSelecting = false;
 
+          InitAnimalSpawnSetting();
 
+          // Set all default items unlocked
+          foreach (System.Reflection.FieldInfo field in typeof(DefaultItems).GetFields())
+          {
+               GlobVars.AddUnlockedItem((Item)field.GetValue(null));
+          }
+
+          GlobVars.SetStoredItems();
+          GlobVars.RecountStoredItems();
      }
-
-     
-
-
      
      void Update()
      {
-          UpdateIngameTime();
-          CameraMovementManagement();
-
-
-          //CheckTownUpgradePossibility();
-
+          deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
           
-          //ManageFoodConsumption();
-          RecountStoredResources();
+
+          KeyPressManager();
+          UpdateIngameTime();
+          //CheckTownUpgradePossibility();
+          
+          ManageFoodConsumption();
+          GlobVars.RecountStoredItemsToTopUIBar();
+          GlobVars.RecountStoredItems();
           UpdateTopUIBar();
           SpawnAnimals();
 
-          RectangleUnitSelect();
+          
 
           
 
@@ -346,44 +541,81 @@ public class GameMasterScript : MonoBehaviour
           {
                PlaceBuilding();
                ManageWorkers();
-               UpdateInfoPanelText();
+               RectangleUnitSelect();
+               CameraMovementManagement();
           }
           
-
-          if (GlobVars.ingameClockInFloat % 0.01f == 0)
-          {
-          }
+          UpdateSeason();
+          UpdateInfoPanelText();
+          
 
      }
      private void LateUpdate()
      {
-          UpdateSeason();
-          ChangeGroundBySeason();
+          
+          if (GlobVars.firstDayOfSeason) ChangeGroundBySeason();
+          
      }
+
+
+
 
      private void OnGUI()
      {
           if (isMouseSelecting)
           {
                // Create a rect from both mouse positions
-               var rect = Utils.GetScreenRect(mousePosition1, Input.mousePosition);
-               Utils.DrawScreenRect(rect, new Color(0.8f, 0.8f, 0.95f, 0.25f));
-               Utils.DrawScreenRectBorder(rect, 2, new Color(0.8f, 0.8f, 0.95f));
+               Rect rectangle = Utils.GetScreenRect(mousePosition1, Input.mousePosition);
+               Utils.DrawScreenRect(rectangle, new Color(0.8f, 0.8f, 0.95f, 0.25f));
+               Utils.DrawScreenRectBorder(rectangle, 2, new Color(0.8f, 0.8f, 0.95f));
           }
-     }
 
+
+          if (showFpsMeter)
+          {
+               int w = Screen.width, h = Screen.height;
+               GUIStyle style = new GUIStyle();
+               Rect rect = new Rect(0, 0, w, h * 2 / 100);
+               style.alignment = TextAnchor.UpperLeft;
+               style.fontSize = h * 2 / 100;
+               style.normal.textColor = new Color(0.0f, 0.0f, 0.5f, 1.0f);
+               float msec = deltaTime * 1000.0f;
+               float fps = 1.0f / deltaTime;
+               string text = string.Format("{0:0.0} ms ({1:0.} fps)", msec, fps);
+               GUI.Label(rect, text, style);
+          }
+          
+
+     }
 
      public void OpenBuildingPanel()
      {
           if (BuildingPanel.GetComponent<Animator>().GetBool("PanelOpen"))
-          {
                BuildingPanel.GetComponent<Animator>().SetBool("PanelOpen", false);
+          else
+               BuildingPanel.GetComponent<Animator>().SetBool("PanelOpen", true);
+     }
+
+     public void OpenTradingPanel()
+     {
+          if (TradingPanel.GetComponent<Animator>().GetBool("PanelOpen"))
+          {
+               TradingPanel.GetComponent<Animator>().SetBool("PanelOpen", false);
+               GlobVars.isTradingPanelOpen = false;
           }
           else
           {
-               BuildingPanel.GetComponent<Animator>().SetBool("PanelOpen", true);
+               TradingPanel.GetComponent<Animator>().SetBool("PanelOpen", true);
+               GlobVars.isTradingPanelOpen = true;
           }
+     }
 
+     public void OpenInfoPanel()
+     {
+          if (InfoPanel.GetComponent<Animator>().GetBool("PanelOpen"))
+               InfoPanel.GetComponent<Animator>().SetBool("PanelOpen", false);
+          else
+               InfoPanel.GetComponent<Animator>().SetBool("PanelOpen", true);
      }
 
      public void CheckTownUpgradePossibility()
@@ -406,6 +638,30 @@ public class GameMasterScript : MonoBehaviour
      }
 
 
+     public void InitAnimalSpawnSetting()
+     {
+          int counter = 0;
+          Transform AnimalSpawnPointsContainer = GameObject.Find("/AnimalController/AnimalSpawnPoints").transform;
+          animalSpawnPoints = new GameObject[AnimalSpawnPointsContainer.childCount];
+          foreach (Transform spawnPoint in AnimalSpawnPointsContainer)
+          {
+               animalSpawnPoints[counter] = spawnPoint.gameObject;
+               counter++;
+          }
+
+          counter = 0;
+          Transform AnimalSpawnDestinationsContainer = GameObject.Find("/AnimalController/AnimalSpawnDestinations").transform;
+          animalSpawnDestinations = new GameObject[AnimalSpawnDestinationsContainer.childCount];
+          foreach (Transform spawnDestination in AnimalSpawnDestinationsContainer)
+          {
+               animalSpawnDestinations[counter] = spawnDestination.gameObject;
+               counter++;
+          }
+
+          Debug.Log(animalSpawnPoints.Length + " animalSpawnPoints and " + animalSpawnDestinations.Length + " animalSpawnDestinations are initalized...");
+     }
+
+
      private void SpawnAnimals()
      {
           animalSpawnTimer -= Time.deltaTime;
@@ -413,21 +669,14 @@ public class GameMasterScript : MonoBehaviour
 
           if (animalSpawnTimer <= 0)
           {
-               int randomedAnimalSpawnTime = rnd.Next(90, 180);
+               animalSpawnTimer = rnd.Next(90, 180);
 
-               animalSpawnTimer = randomedAnimalSpawnTime;
-
-               int randomedSpawnPointNumber = rnd.Next(0, 2);
-               int randomedDestinationNumber = rnd.Next(0, 2);
+               int randomedSpawnPointNumber = rnd.Next(0, animalSpawnPoints.Length);
+               int randomedDestinationNumber = rnd.Next(0, animalSpawnDestinations.Length);
               
-
-               GameObject[] animalSpawnPointArray = { animalSpawnPoint1, animalSpawnPoint2 };
-               GameObject[] animalDestinationArray =  { animalDestination1 , animalDestination2};
-               
-
-               GameObject newDeer = Instantiate(Resources.Load("Deer"), animalSpawnPointArray[randomedSpawnPointNumber].transform.position, Quaternion.identity) as GameObject;
-               newDeer.GetComponent<AnimalScript>().target = animalDestinationArray[randomedDestinationNumber].transform.gameObject;
-               newDeer.GetComponent<AnimalScript>().agent.SetDestination(animalDestinationArray[randomedDestinationNumber].transform.position);
+               GameObject newDeer = Instantiate(Resources.Load("Deer"), animalSpawnPoints[randomedSpawnPointNumber].transform.position, Quaternion.identity) as GameObject;
+               newDeer.GetComponent<AnimalScript>().target = animalSpawnDestinations[randomedDestinationNumber];
+               newDeer.GetComponent<AnimalScript>().agent.SetDestination(animalSpawnDestinations[randomedDestinationNumber].transform.position);
                newDeer.name = "Deer";
                newDeer.transform.SetParent(GameObject.Find("Animals").GetComponent<Transform>());
                Debug.Log("New Deer is spawned.");
@@ -446,7 +695,7 @@ public class GameMasterScript : MonoBehaviour
 
           if (Input.GetMouseButtonDown(0) && isBuildingModeOn == true)
           {
-               RaycastHit hitInfo;
+               RaycastHit hitInfo = new RaycastHit();
                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                
                if (Physics.Raycast(ray, out hitInfo) && hitInfo.transform.tag != "Object")
@@ -489,6 +738,16 @@ public class GameMasterScript : MonoBehaviour
                newBuilding = Instantiate(Resources.Load("Farm"), finalPosition, Quaternion.identity) as GameObject;
                DecreaseResource(ItemType.WOOD, 5); DecreaseGlobalFood(30);
           }
+          else if (BuildingTypeDropdown.value == 5 && GlobVars.WOOD >= 50 && GlobVars.FOOD >= 25)
+          {
+               newBuilding = Instantiate(Resources.Load("MillBakery"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 50); DecreaseResource(ItemType.STONE, 25);
+          }
+          else if (BuildingTypeDropdown.value == 6 && GlobVars.WOOD >= 125 && GlobVars.FOOD >= 50)
+          {
+               newBuilding = Instantiate(Resources.Load("TradingPost"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 125); DecreaseResource(ItemType.STONE, 50);
+          }
           else
           {
                Debug.Log("Not enough resource to build.");
@@ -496,9 +755,9 @@ public class GameMasterScript : MonoBehaviour
           
           if(newBuilding != null)
           {
-               RecountStoredResources();
+               GlobVars.RecountStoredItemsToTopUIBar();
                newBuilding.transform.SetParent(buildingGrid.GetComponent<Transform>());
-               FindAllPlacedBuilding();
+               FindAllPlacedStorageBuilding();
           }
      }
 
@@ -509,67 +768,36 @@ public class GameMasterScript : MonoBehaviour
           BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Granary (Wood: 20, Stone: 5)"));
           BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Campfire (Wood: 10, Stone: 5)"));
           BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Farm (Wood: 5, Food: 30)"));
+          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Mill and Bakery (Wood: 50, Stone: 25)"));
+          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Trading Post (Wood: 125, Stone: 50)"));
      }
 
 
-     public void FindAllPlacedBuilding()
+     public void FindAllPlacedStorageBuilding()
      {
           // Itarate trought the Buildings gameobject's children and add it to the building list
           foreach (Transform building in GameObject.Find("/BaseGrid/Buildings").transform)
           {
-               if (building.GetComponent<BuildingScript>())
+               if (building.GetComponent<BuildingScript>() && building.GetComponent<BuildingScript>().inventory != null)
                {
-                    if (!GlobVars.buildingList.Contains(building.gameObject))
+                    if (!GlobVars.storageBuildings.Contains(building.gameObject))
                     {
                          Debug.Log(building.GetComponent<BuildingScript>().buildingName + " has been added to the building list");
-                         GlobVars.buildingList.Add(building.gameObject);
+                         GlobVars.storageBuildings.Add(building.gameObject);
                     }
 
                }
           }
      }
      
-     public void RecountStoredResources()
-     {
-          int wood, stone, food, rawFood;
-          wood = stone = food = rawFood = 0;
-          foreach (GameObject building in GlobVars.buildingList)
-          {
-               if (building.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE || building.GetComponent<BuildingScript>().buildingType == BuildingType.TOWNHALL)
-               {
-                    wood += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.WOOD);
-                    stone += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.STONE);
-               }
-
-               if (building.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY || building.GetComponent<BuildingScript>().buildingType == BuildingType.TOWNHALL)
-               {
-                    food += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.BERRY);
-                    food += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.COOKED_MEAT);
-                    food += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.COOKED_FISH);
-                    food += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.BAKED_POTATO);
-                    food += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.BREAD);
-                    rawFood += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.RAW_MEAT);
-                    rawFood += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.RAW_FISH);
-                    rawFood += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.POTATO);
-                    rawFood += building.GetComponent<BuildingScript>().inventory.GetItemCurrentQuantity(ItemType.WHEAT);
-
-               }
-          }
-          GlobVars.WOOD = wood;
-          GlobVars.STONE = stone;
-          GlobVars.FOOD = food;
-          GlobVars.RAW_FOOD = rawFood;
-     }
-     
-
      private void DecreaseResource(ItemType itemType, int decreaseValue)
      {
           int value = decreaseValue;
 
-          foreach (GameObject building in GlobVars.buildingList)
+          foreach (GameObject building in GlobVars.storageBuildings)
           {
 
-               if (building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.itemGroup == Utils.SpecifyItemGroup(itemType) || building.GetComponent<BuildingScript>().inventory.itemGroup == ItemGroup.ALL))
+               if (building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.inventoryType == Utils.SpecifyInventoryType(itemType) || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL))
                {
                     if (value == 0) break;
 
@@ -588,25 +816,23 @@ public class GameMasterScript : MonoBehaviour
                          Debug.Log("Left resource " + value + " " + itemType);
                     }
 
-                    RecountStoredResources();
+                    GlobVars.RecountStoredItemsToTopUIBar();
                }
           }
      }
-
-     // Szeretném az EHETŐ ételek közül csökkenteni az adott mértékkel
 
      private void DecreaseGlobalFood(int decreaseValue) // Iterate trough the inventory to find any kind of food and decrase it by the give value
      {
           int value = decreaseValue;
 
-          foreach (GameObject building in GlobVars.buildingList)
+          foreach (GameObject building in GlobVars.storageBuildings)
           {
-               if (building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.itemGroup == ItemGroup.FOOD || building.GetComponent<BuildingScript>().inventory.itemGroup == ItemGroup.ALL))
+               if (building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.FOOD || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL))
                {
 
-                    if(building.GetComponent<BuildingScript>().inventory.findNonEmptyEdibleItemTypes() != null)
+                    if(building.GetComponent<BuildingScript>().inventory.FindNonEmptyEdibleItemTypes() != null)
                     {
-                         foreach (ItemType edibleFoodType in building.GetComponent<BuildingScript>().inventory.findNonEmptyEdibleItemTypes())
+                         foreach (ItemType edibleFoodType in building.GetComponent<BuildingScript>().inventory.FindNonEmptyEdibleItemTypes())
                          {
                               if (value == 0) break;
                               
@@ -625,7 +851,7 @@ public class GameMasterScript : MonoBehaviour
                                    //Debug.Log("Left resource " + value + " " + edibleFoodType);
                               }
 
-                              RecountStoredResources();
+                              GlobVars.RecountStoredItemsToTopUIBar();
                          }
                     }
                }
@@ -640,16 +866,16 @@ public class GameMasterScript : MonoBehaviour
           {
                foodConsumptionTimer = foodConsumptionTimerInitial;
 
-               Debug.Log("Global food decrased by " + GlobVars.POPULATION);
-               //int calculatedFoodDecrease = GlobVars.POPULATION;
-               //GlobVars.FOOD -= calculatedFoodDecrease;
-               DecreaseGlobalFood(GlobVars.POPULATION);
-               //if (GlobVars.FOOD < 0) GlobVars.FOOD = 0;
+               if(GlobVars.FOOD > 0)
+               {
+                    Debug.Log("Global food decrased by " + GlobVars.POPULATION);
+                    DecreaseGlobalFood(GlobVars.POPULATION);
+               }
+               
                
           }
      }
-
-
+     
 
      private void SpawnWorker(Vector3 position)
      {
@@ -662,16 +888,16 @@ public class GameMasterScript : MonoBehaviour
      private void ManageWorkers()
      {
           // Worker unit orders
-          if (GlobVars.workerList.Count != 0)
+          if (GlobVars.GetWorkers().Length != 0)
           {
-               foreach (GameObject worker in GlobVars.workerList)
+               foreach (GameObject worker in GlobVars.GetWorkers())
                {
 
                     // Setting unit AI Agent destination target
                     if (Input.GetMouseButtonDown(1) && worker.GetComponent<WorkerScript>().unitIsSelected)
                     {
                          Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-                         RaycastHit hit;
+                         RaycastHit hit = new RaycastHit(); ;
 
 
                          if (Physics.Raycast(ray, out hit))
@@ -687,7 +913,7 @@ public class GameMasterScript : MonoBehaviour
 
                     if (GlobVars.FOOD == 0)
                     {
-                         worker.GetComponent<WorkerScript>().SetCooldownModifier(3f);
+                         worker.GetComponent<WorkerScript>().SetCooldownModifier(1.75f);
                     }
                     else
                     {
@@ -697,7 +923,7 @@ public class GameMasterScript : MonoBehaviour
           }
 
           // Count workers to TOP UI
-          GlobVars.POPULATION = GlobVars.workerList.Count;
+          GlobVars.POPULATION = GlobVars.GetWorkers().Length;
 
      }
 
@@ -764,58 +990,69 @@ public class GameMasterScript : MonoBehaviour
 
      private void CameraMovementManagement()
      {
-          Bounds orthographicBounds = Utils.GetOrthographicBounds(cam);
-
-          int mouseMovingScreenBoundary = 10;
-          float camMovingSpeed = cam.orthographicSize * 0.7f; 
-          float camZoomSpeed = 20f;
-
-          if (Input.GetKey(KeyCode.LeftShift))
+          if (Application.isFocused)
           {
-               camMovingSpeed *= 2;
-               camZoomSpeed *= 2;
-          }
-          
+               Bounds orthographicBounds = Utils.GetOrthographicBounds(cam);
 
-          if ((Input.mousePosition.x > Screen.width - mouseMovingScreenBoundary && Input.mousePosition.x < Screen.width + mouseMovingScreenBoundary ) || Input.GetKey(KeyCode.D))
-          {
+               int mouseMovingScreenBoundary = 10;
+               float camMovingSpeed = cam.orthographicSize * 0.7f;
+               float camZoomSpeed = 20f;
+
+               if (Input.GetKey(KeyCode.LeftShift))
+               {
+                    camMovingSpeed *= 2;
+                    camZoomSpeed *= 2;
+               }
+
+
+
+               if ((Input.mousePosition.x > Screen.width - mouseMovingScreenBoundary && Input.mousePosition.x < Screen.width + mouseMovingScreenBoundary) || Input.GetKey(KeyCode.D))
+               {
+                    assistCam.CopyFrom(cam);
+                    assistCam.transform.position += new Vector3(Time.deltaTime * camMovingSpeed, 0.0f, 0.0f);
+                    if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
+                         cam.transform.position = assistCam.transform.position;
+               }
+               if ((Input.mousePosition.x < 0 + mouseMovingScreenBoundary && Input.mousePosition.x > 0 - mouseMovingScreenBoundary) || Input.GetKey(KeyCode.A))
+               {
+                    assistCam.CopyFrom(cam);
+                    assistCam.transform.position += new Vector3(-(Time.deltaTime * camMovingSpeed), 0.0f, 0.0f);
+                    if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
+                         cam.transform.position = assistCam.transform.position;
+               }
+               if ((Input.mousePosition.y > Screen.height - mouseMovingScreenBoundary && Input.mousePosition.y < Screen.height + mouseMovingScreenBoundary) || Input.GetKey(KeyCode.W))
+               {
+                    assistCam.CopyFrom(cam);
+                    assistCam.transform.position += new Vector3(0.0f, Time.deltaTime * camMovingSpeed, 0.0f);
+                    if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
+                         cam.transform.position = assistCam.transform.position;
+               }
+               if (Input.mousePosition.y < 0 + mouseMovingScreenBoundary && Input.mousePosition.y > 0 - mouseMovingScreenBoundary || Input.GetKey(KeyCode.S))
+               {
+                    assistCam.CopyFrom(cam);
+                    assistCam.transform.position += new Vector3(0.0f, -(Time.deltaTime * camMovingSpeed), 0.0f);
+                    if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
+                         cam.transform.position = assistCam.transform.position;
+               }
+
                assistCam.CopyFrom(cam);
-               assistCam.transform.position += new Vector3(Time.deltaTime * camMovingSpeed, 0.0f, 0.0f);
+               assistCam.orthographicSize += -(Input.GetAxis("Mouse ScrollWheel") * camZoomSpeed);
                if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
-                    cam.transform.position = assistCam.transform.position;
+                    cam.orthographicSize += -(Input.GetAxis("Mouse ScrollWheel") * camZoomSpeed);
+
+
+               if (cam.orthographicSize > 50f) cam.orthographicSize = 50;
+               else if (cam.orthographicSize < 27f) cam.orthographicSize = 27f;
+
           }
-          if ((Input.mousePosition.x < 0 + mouseMovingScreenBoundary && Input.mousePosition.x > 0 - mouseMovingScreenBoundary) || Input.GetKey(KeyCode.A))
+     }
+
+     private void KeyPressManager()
+     {
+          if (Input.GetKeyDown(KeyCode.F2))
           {
-               assistCam.CopyFrom(cam);
-               assistCam.transform.position += new Vector3(-(Time.deltaTime * camMovingSpeed), 0.0f, 0.0f);
-               if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
-                    cam.transform.position = assistCam.transform.position;
+               showFpsMeter = !showFpsMeter;
           }
-          if ((Input.mousePosition.y > Screen.height - mouseMovingScreenBoundary && Input.mousePosition.y < Screen.height + mouseMovingScreenBoundary) || Input.GetKey(KeyCode.W))
-          {
-               assistCam.CopyFrom(cam);
-               assistCam.transform.position += new Vector3(0.0f, Time.deltaTime * camMovingSpeed, 0.0f);
-               if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
-                    cam.transform.position = assistCam.transform.position;
-          }
-          if (Input.mousePosition.y < 0 + mouseMovingScreenBoundary && Input.mousePosition.y > 0 - mouseMovingScreenBoundary || Input.GetKey(KeyCode.S))
-          {
-               assistCam.CopyFrom(cam);
-               assistCam.transform.position += new Vector3(0.0f, -(Time.deltaTime * camMovingSpeed), 0.0f);
-               if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
-                    cam.transform.position = assistCam.transform.position;
-          }
-
-          assistCam.CopyFrom(cam);
-          assistCam.orthographicSize += -(Input.GetAxis("Mouse ScrollWheel") * camZoomSpeed);
-          if (Utils.BoundsIsEncapsulated(mapBounds, Utils.GetOrthographicBounds(assistCam)))
-               cam.orthographicSize += -(Input.GetAxis("Mouse ScrollWheel") * camZoomSpeed);
-
-
-          if (cam.orthographicSize > 50f) cam.orthographicSize = 50;
-          else if (cam.orthographicSize < 27f) cam.orthographicSize = 27f;
-
-          
      }
 
      private void RectangleUnitSelect()
@@ -830,25 +1067,31 @@ public class GameMasterScript : MonoBehaviour
           if (Input.GetMouseButtonUp(0))
                isMouseSelecting = false;
 
-          rectangleUnitSelectHandler();
+          RectangleUnitSelectHandler();
+          
      }
 
-     private void rectangleUnitSelectHandler()
+     private void RectangleUnitSelectHandler()
      {
-          if (isMouseSelecting && Vector3.Distance(mousePosition1, Input.mousePosition) > 5f)
+          if (isMouseSelecting && Vector3.Distance(mousePosition1, Input.mousePosition) > 10f)
           {
-               //Debug.Log("Rectangle selection is active");
+               //Debug.Log("Vector3.Distance(mousePosition1, Input.mousePosition): " + Vector3.Distance(mousePosition1, Input.mousePosition).ToString());
                Bounds viewportBounds = Utils.GetViewportBounds(cam, mousePosition1, Input.mousePosition);
-               foreach (GameObject worker in GlobVars.workerList)
+               foreach (GameObject worker in GlobVars.GetWorkers())
                {
-                    if (viewportBounds.Contains(cam.WorldToViewportPoint(worker.transform.position)))
+                    WorkerScript ws = worker.GetComponent<WorkerScript>();
+                    if (!ws.workerIsHidden)
                     {
-                         worker.GetComponent<WorkerScript>().SelectWorker();
+                         if (viewportBounds.Contains(cam.WorldToViewportPoint(worker.transform.position)))
+                         {
+                              ws.SelectWorker();
+                         }
+                         else
+                         {
+                              ws.UnselectWorker();
+                         }
                     }
-                    else
-                    {
-                         worker.GetComponent<WorkerScript>().UnselectWorker();
-                    }
+                    
                }
                
           }
@@ -883,8 +1126,8 @@ public class GameMasterScript : MonoBehaviour
 
      private void UpdateTopUIBar()
      {
-          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day + " (" + GlobVars.season + ") " + "      Passed Time: " + GlobVars.ingameClock + " sec ( " + GlobVars.ingameClockInFloat +  " )";
-          SupplyText.text = "Pop: " + GlobVars.POPULATION + "  Wood: " + GlobVars.WOOD + "  Stone: " + GlobVars.STONE + "  Food: " + GlobVars.FOOD + " / " + +GlobVars.RAW_FOOD +"(raw)" ;
+          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day + " (" + GlobVars.season + ") "; //+ "      Passed Time: " + GlobVars.ingameClock;   " sec ( " + GlobVars.ingameClockInFloat +  " )";
+          SupplyText.text = "Pop: " + GlobVars.POPULATION + "   Wood: " + GlobVars.WOOD + "   Stone: " + GlobVars.STONE + "   Food: " + GlobVars.FOOD + "   Gold: " + GlobVars.GOLD;
           TownLevelText.text = "Town level " + townLevel;
      }
 

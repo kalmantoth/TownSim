@@ -11,10 +11,14 @@ public class ResourceScript : MonoBehaviour
      private Quaternion startingPosition;
      public GameObject workerTargetPoint;
 
+     private SpriteRenderer resourceSpriteRenderer;
+
      void Awake()
      {
 
           workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
+
+          resourceSpriteRenderer = this.GetComponentInChildren<SpriteRenderer>();
 
           // Setting render sorting order by finding gameobject's global position;
           //this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
@@ -25,6 +29,7 @@ public class ResourceScript : MonoBehaviour
                startingPosition = this.gameObject.transform.GetChild(0).gameObject.transform.rotation;   // Starting position of the Sprite (animation)
           }
           */
+          ModifyRenderingOrder();
      }
      
 
@@ -45,25 +50,33 @@ public class ResourceScript : MonoBehaviour
                          DestroyResourceGameObject();
                     }
           }
-          else
-          {
-          }
 
-          ChangeSpriteBySeason();
-          ChangeResourceAmountBySeason();
-          ModifyRenderingOrder();
+
+          
+     }
+
+     void LateUpdate()
+     {
+          if (GlobVars.firstDayOfSeason)
+          {
+               ChangeSpriteBySeason();
+               ChangeResourceAmountBySeason();
+          }
+          
      }
 
      public void ModifyRenderingOrder()
      {
-          this.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(((this.gameObject.transform.position.y)*100)-25); // The number -50 is because the worker render's correct display
-          //25 = -(0.5*100-50)
-          //   25    50  -0 
+          resourceSpriteRenderer.sortingOrder = -(int)(((this.gameObject.transform.position.y)*100)-25); // The number -50 is because the worker render's correct display
      }
+
+     
 
 
      public void ChangeSpriteBySeason()
      {
+          
+
           string seasonResourcePath = "seasons/" + GlobVars.season.ToString().ToLower() + "/";
           string resource = "";
 
@@ -85,7 +98,7 @@ public class ResourceScript : MonoBehaviour
 
           if (this.resourceContainerName.Equals("Oak tree") || this.resourceContainerName.Equals("Raspberry bush") || this.resourceContainerName.Equals("Rock"))
           {
-               this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>(seasonResourcePath + resource);
+               resourceSpriteRenderer.sprite = Resources.Load<Sprite>(seasonResourcePath + resource);
           }
                
 
@@ -178,7 +191,7 @@ public class ResourceScript : MonoBehaviour
           GlobVars.infoPanelGameObject = this.gameObject;
      }
 
-     public string ToString()
+     public override string ToString()
      {
           return resourceContainerName + "\n\tresource type: " + itemType.ToString() + "\n\tworker's count: " + userList.Count + "\n\tresource amount: " + currentAmount + "/" + fullAmount;
      }

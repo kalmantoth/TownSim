@@ -4,6 +4,7 @@ using UnityEngine.Experimental.U2D.Animation;
 using Random = System.Random;
 using System.Collections;
 
+public enum WorkerStatusType { IDLE = 1, MOVING = 2, WOOD_CHOPPING = 3, STONE_MINING = 4, FISHING = 5, FARMING = 6, CONSTRUCING = 7, GATHERING = 8, HUNTING = 9, ITEMDEPOSIT = 10, ITEMDRAW = 11, COOKING = 12, BAKING = 13 }
 
 public class WorkerScript : MonoBehaviour
 {
@@ -37,7 +38,6 @@ public class WorkerScript : MonoBehaviour
      private Vector3 lastPosition;
      private GameObject ground;
      public float distanceFromTarget;
-     private bool facingLeft;
 
      private Random rnd;
      private int randomEventTime;
@@ -46,22 +46,27 @@ public class WorkerScript : MonoBehaviour
      private int workerSpriteType;
      private string workerSpritePath;
 
-     private Inventory inventory;
+     public Inventory inventory;
      private GameObject selector;
 
      public ItemType drawItemType;
      public int drawItemQuantity;
      public ItemType depositItemType;
      public int depositItemQuantity;
+
+     private Animator workerAnimator;
+
+
+     public bool workerIsHidden;
      
      // Basic functions
      private void Awake()
      {
           workerSpritePath = ("SpriteContainer/WorkerBaseSprite");
+          workerIsHidden = false;
 
           movingSpeed = -1000f;
           movingVelocity = new Vector3();
-          facingLeft = true;
 
           unitIsSelected = false;
 
@@ -79,13 +84,13 @@ public class WorkerScript : MonoBehaviour
           lastPosition = this.transform.position;
 
 
-          GlobVars.AddWorkerToWorkerList(this.gameObject);
+          GlobVars.AddWorkerToWorkers(this.gameObject);
           workerStatus = WorkerStatusType.IDLE;
 
 
           //Rotating the SpriteContainer GO for the NavMeshAgent
-          //transform.Find("SpriteContainer").GetComponent<Transform>().Rotate(90, 0, 0);
-          
+          this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+
           Debug.Log("New Worker spawned.");
 
           // Random example code for future features for worker
@@ -105,8 +110,8 @@ public class WorkerScript : MonoBehaviour
 
           ChangeWorkerSprite(workerSpriteType);
 
-          inventory = new Inventory(10 , ItemGroup.ALL);
-          inventory.ModifyInventory(ItemType.WOOD, 0);
+          inventory = new Inventory(10 , InventoryType.ALL);
+          inventory.ModifyInventory(ItemType.BERRY, 0);
 
           selector = this.transform.Find("SpriteContainer/selector").gameObject;
 
@@ -114,6 +119,8 @@ public class WorkerScript : MonoBehaviour
 
           drawItemType = depositItemType = ItemType.NOTHING;
           drawItemQuantity = depositItemQuantity = 0;
+
+          workerAnimator = this.GetComponent<Animator>();
      }
      
 
@@ -124,11 +131,11 @@ public class WorkerScript : MonoBehaviour
           movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
           movingVelocity = (transform.position - lastPosition) / Time.deltaTime;
           lastPosition = transform.position;
-          
+
 
           // Animator update with the worker's current status and moving speed
-          this.GetComponent<Animator>().SetInteger("WorkerStatus", (int)workerStatus);
-          this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
+          workerAnimator.SetInteger("WorkerStatus", (int)workerStatus);
+          workerAnimator.SetFloat("Speed", movingSpeed);
 
           // Reset action cooldown even on idle mode
           if (actionCooldown <= -0.25f) actionCooldown = actionCooldownInitial;
@@ -144,7 +151,6 @@ public class WorkerScript : MonoBehaviour
      {
           CheckFacingSide();
           ModifyRenderingOrder();
-
      }
 
      // ---------------- //
@@ -152,7 +158,7 @@ public class WorkerScript : MonoBehaviour
      // ---------------- //
 
      // Game Mechanic functions
-
+     
 
      public void HandleActivities()
      {
@@ -161,6 +167,7 @@ public class WorkerScript : MonoBehaviour
                distanceFromTarget = Utils.CalculateDistance(this.gameObject, target);
                targetLayer = LayerMask.LayerToName(target.layer);
                
+
                
                // Worker while target nothing and idle
                if (targetLayer.Equals("Ground"))
@@ -183,12 +190,14 @@ public class WorkerScript : MonoBehaviour
                          }
                          else
                          {
-                              this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.itemGroup);
+                              this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
                          }
 
                          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+                         Debug.Log("Going back to " + savedTarget.gameObject.name);
                          SetTarget(savedTarget);
                          savedTarget = null;
+                         //nem megy vissza dógozni
 
                     }
                     // Worker load the wanted food type and goes back to the active building
@@ -205,7 +214,8 @@ public class WorkerScript : MonoBehaviour
                     // Worker manually unload it's full item stacks
                     else if (target.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE || target.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY || target.GetComponent<BuildingScript>().buildingType == BuildingType.TOWNHALL)
                     {
-                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.itemGroup);
+                         Debug.Log("Unloaded all the items to following building's inventory: " + target.gameObject.name);
+                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
                          SetTargetToGround();
                     }
                     // Worker while cooking at campfire
@@ -229,6 +239,17 @@ public class WorkerScript : MonoBehaviour
                          
                          FarmActivity();
                          //CookActivity();
+                    }
+                    // Worker while at the millbakery
+                    else if (target.GetComponent<BuildingScript>().buildingType == BuildingType.MILLBAKERY)
+                    {
+                         if (workerStatus != WorkerStatusType.BAKING)
+                         {
+                              agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
+                              workerStatus = WorkerStatusType.BAKING;
+                         }
+
+                         BakingActivity();
                     }
 
                }
@@ -309,12 +330,13 @@ public class WorkerScript : MonoBehaviour
           {
                ItemType campfireSelectedFoodType = target.GetComponent<BuildingScript>().selectedActiveItemType;
 
-
+               // If the worker's inventory is full of cooked food then automatically unload it
                if (inventory.IsItemTypeFull(inventory.GetFoodItemTypeWhich(true)))
                {
                     UnloadInventory(inventory.GetFoodItemTypeWhich(true));
                }
 
+               // Checking if no raw food found at the inventories on the map
                if (GlobVars.RAW_FOOD == 0 && !inventory.IsThereFoodWhich(true) && !inventory.IsThereFoodWhich(false))
                {
                     Debug.Log("Could not found any raw food to cook.");
@@ -336,12 +358,12 @@ public class WorkerScript : MonoBehaviour
                          target.GetComponent<BuildingScript>().isBuildingInUse = true;
                          if (actionCooldown <= 0.0f)
                          {
-                              actionCooldown = 3f * cooldownModifier;
+                              actionCooldown = actionCooldownInitial * cooldownModifier;
                               if (inventory.GetFirstFoodWhich(false) != ItemType.NOTHING)
                               {
                                    ItemType foodToCook = inventory.GetFirstFoodWhich(false);
                                    inventory.ModifyInventory(foodToCook, -1);
-                                   inventory.ModifyInventory(Utils.SpecifyCookedPairOfRawFood(foodToCook), +1);
+                                   inventory.ModifyInventory(Utils.SpecifyDonePairOfUndoneFood(foodToCook), +1);
                               }
                          }
                          
@@ -361,11 +383,11 @@ public class WorkerScript : MonoBehaviour
 
                          if (actionCooldown <= 0.0f)
                          {
-                              actionCooldown = 3f * cooldownModifier;
+                              actionCooldown = actionCooldownInitial * cooldownModifier;
                               if (inventory.GetFirstFoodWhich(false) != ItemType.NOTHING)
                               {
                                    inventory.ModifyInventory(foodToCook, -1);
-                                   inventory.ModifyInventory(Utils.SpecifyCookedPairOfRawFood(foodToCook), +1);
+                                   inventory.ModifyInventory(Utils.SpecifyDonePairOfUndoneFood(foodToCook), +1);
                               }
                          }
 
@@ -376,24 +398,70 @@ public class WorkerScript : MonoBehaviour
           
      }
 
-     
+     public void BakingActivity()
+     {
+          if (workerStatus == WorkerStatusType.BAKING)
+          {
+               ItemType baseMaterial = target.GetComponent<BuildingScript>().selectedActiveItemType;
+               ItemType doneFood = Utils.SpecifyDonePairOfUndoneFood(baseMaterial);
+
+               if (inventory.IsItemTypeFull(doneFood))
+               {
+                    UnloadInventory(doneFood);
+               }
+
+               if (GlobVars.GetGlobalStoredItemQuantity(baseMaterial) == 0 && inventory.GetItemCurrentQuantity(baseMaterial) <= 0 && inventory.GetItemCurrentQuantity(doneFood) <= 0)
+               {
+                    Debug.Log("Could not found any " + baseMaterial + " to bake.");
+                    SetTargetToGround();
+               }
+
+               
+               if (inventory.GetItemQuantity(baseMaterial) <= 0 && inventory.GetItemQuantity(doneFood) == 0)
+               {
+                    target.GetComponent<BuildingScript>().RemoveIndoorWorker(this.gameObject);
+                    workerIsHidden = false;
+                    LoadInventory(baseMaterial);
+               }
+               else
+               {
+                    target.GetComponent<BuildingScript>().AddIndoorWorker(this.gameObject);
+                    workerIsHidden = true;
+                    UnselectWorker();
+
+                    if (actionCooldown <= 0.0f)
+                    {
+                         actionCooldown = actionCooldownInitial * cooldownModifier;
+                         if (inventory.GetItemQuantity(baseMaterial) > 0)
+                         {
+                              inventory.ModifyInventory(doneFood, +1);
+                              inventory.ModifyInventory(baseMaterial, -1);
+                         }
+                    }
+
+               }
+
+          }
+
+     }
+
+
      public void SetTarget(GameObject target, WorkerStatusType workerStatusType = WorkerStatusType.MOVING)
      {
           agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
           this.previousTarget = this.target;
           HandlePreviousTarget();
           this.target = target;
-
-
+          
           if (target.GetComponent<GroundScript>() != null)  // If the target is ground then move to click position
           {
                agent.SetDestination(targetClickPosition);
           }
           else // Agent moves to the target
           {
-               if(target.transform.FindChild("WorkerTargetPoint").gameObject != null)
+               if(target.transform.Find("WorkerTargetPoint").gameObject != null)
                {
-                    agent.SetDestination(target.transform.FindChild("WorkerTargetPoint").gameObject.transform.position);
+                    agent.SetDestination(target.transform.Find("WorkerTargetPoint").gameObject.transform.position);
                }
                else
                {
@@ -431,27 +499,31 @@ public class WorkerScript : MonoBehaviour
      {
           int collectValue = 1;
 
-          if (actionCooldown <= 0.0f && target.GetComponent<ResourceScript>().ResourceAmountCanBeDecreased(collectValue))
-          {
-               actionCooldown = 2f * cooldownModifier;
+          ResourceScript resourceTarget = target.GetComponent<ResourceScript>();
 
-               if(target.GetComponent<ResourceScript>().itemType != ItemType.NOTHING)
+
+
+          if (actionCooldown <= 0.0f && resourceTarget.ResourceAmountCanBeDecreased(collectValue))
+          {
+               actionCooldown = actionCooldownInitial * cooldownModifier;
+
+               if(resourceTarget.itemType != ItemType.NOTHING)
                {
-                    if (this.inventory.ModifyInventory(target.GetComponent<ResourceScript>().itemType, collectValue) == false)
+                    if (this.inventory.ModifyInventory(resourceTarget.itemType, collectValue) == false)
                     {
-                         target.GetComponent<ResourceScript>().RemoveFromResourceUserList(this.gameObject);
+                         resourceTarget.RemoveFromResourceUserList(this.gameObject);
                          SetTargetToGround();
                     }
                     else
                     {
-                         target.GetComponent<ResourceScript>().DecreaseCurrentResourceAmount(collectValue);
+                         resourceTarget.DecreaseCurrentResourceAmount(collectValue);
                     }
                }
           }
 
-          if (this.inventory.IsItemTypeFull(target.GetComponent<ResourceScript>().itemType))   // If the resource that I'm collecting is full
+          if (this.inventory.IsItemTypeFull(resourceTarget.itemType))   // If the resource that I'm collecting is full
           {
-               UnloadInventory(target.GetComponent<ResourceScript>().itemType);
+               UnloadInventory(resourceTarget.itemType);
           }
      }
 
@@ -462,10 +534,10 @@ public class WorkerScript : MonoBehaviour
           {
                float minDistance = float.MaxValue;
                int loadQuantity = 0;
-               foreach (GameObject building in GlobVars.buildingList)
+               foreach (GameObject building in GlobVars.storageBuildings)
                {
                     bool isBuildingLoadAble = false;
-                    if (Utils.SpecifyItemGroup(itemType) == building.GetComponent<BuildingScript>().itemGroup || building.GetComponent<BuildingScript>().itemGroup == ItemGroup.ALL)
+                    if (Utils.SpecifyInventoryType(itemType) == building.GetComponent<BuildingScript>().inventory.inventoryType || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL)
                     {
                          if (building.GetComponent<BuildingScript>().inventory.CanModifyItemQuantity(itemType, -this.inventory.GetMaxItemQuantity(itemType)))
                          {
@@ -518,10 +590,10 @@ public class WorkerScript : MonoBehaviour
           {
                float minDistance = float.MaxValue;
                int unloadQuantity = 0;
-               foreach (GameObject building in GlobVars.buildingList)
+               foreach (GameObject building in GlobVars.storageBuildings)
                {
                     bool isBuildingUnloadAble = false;
-                    if (Utils.SpecifyItemGroup(itemType) == building.GetComponent<BuildingScript>().itemGroup || building.GetComponent<BuildingScript>().itemGroup == ItemGroup.ALL)
+                    if (Utils.SpecifyInventoryType(itemType) == building.GetComponent<BuildingScript>().inventory.inventoryType || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL)
                     {
                          if (building.GetComponent<BuildingScript>().inventory.CanModifyItemQuantity(itemType, this.inventory.GetItemQuantity(itemType)))
                          {
@@ -633,7 +705,7 @@ public class WorkerScript : MonoBehaviour
      public void SelectWorker()
      {
           unitIsSelected = true;
-          GlobVars.selectedWorkerCount++;
+          GlobVars.AddWorkerToSelectedWorkers(this.gameObject);
 
           transform.Find("SpriteContainer/selector").gameObject.SetActive(true);
 
@@ -643,7 +715,7 @@ public class WorkerScript : MonoBehaviour
      public void UnselectWorker()
      {
           unitIsSelected = false;
-          GlobVars.selectedWorkerCount--;
+          GlobVars.RemoveWorkerFromSelectedWorkers(this.gameObject);
 
           transform.Find("SpriteContainer/selector").gameObject.SetActive(false);
      }
@@ -655,17 +727,23 @@ public class WorkerScript : MonoBehaviour
           workerStatus = WorkerStatusType.IDLE;
      }
 
+     
+
      public void OnMouseDown()
      {
-          if (!unitIsSelected)
+          if (Input.GetMouseButtonDown(0) && !workerIsHidden)
           {
-               SelectWorker();
-               GlobVars.infoPanelGameObject = this.gameObject;
+               if (!unitIsSelected)
+               {
+                    SelectWorker();
+                    GlobVars.infoPanelGameObject = this.gameObject;
+               }
+               else
+               {
+                    UnselectWorker();
+               }
           }
-          else
-          {
-               UnselectWorker();
-          }
+               
      }
 
      // ---------------- //
@@ -705,29 +783,38 @@ public class WorkerScript : MonoBehaviour
           {
                int localRenderingOrderInSprite = -(int)spritesInitialRenderingOrder[i];
                sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) + localRenderingOrderInSprite);
+               // Modified rendering order to the selector
+               if(sprite.name == "selector") sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y+10) * 100) + localRenderingOrderInSprite);
                i++;
           }
 
      }
      
+
      public void CheckFacingSide()
      {
           if (target != null)
           {
-               Vector3 pointToFace = new Vector3();
-               if (target == ground) pointToFace = targetClickPosition;
-               else pointToFace = target.transform.position;
-
-
-               if (pointToFace.x - transform.position.x > 0 || movingVelocity.x > 0) // Facing Right
-               {
-                    this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
-                    facingLeft = false;
+               if (movingSpeed > 0.1f) {
+                    if (movingVelocity.x >= 0) // Facing Right
+                    {
+                         this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+                    }
+                    else // Facing Left
+                    {
+                         this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+                    }
                }
-               else // Facing Left
+               else
                {
-                    this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
-                    facingLeft = true;
+                    if (target.gameObject.transform.position.x >= this.transform.position.x) // Facing Right
+                    {
+                         this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+                    }
+                    else // Facing Left
+                    {
+                         this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+                    }
                }
           }
      }
@@ -765,7 +852,7 @@ public class WorkerScript : MonoBehaviour
 
      // String manipulation functions
 
-     public string ToString()
+     public override string ToString()
      {
 
           string workerString = "Worker" + "\n\t is selected: " + unitIsSelected.ToString() + "\n\t status: " + workerStatus.ToString() + "\n\t inventory: " + inventory.ToString();

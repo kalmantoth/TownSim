@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum FarmType { NOTHING, WHEAT, POTATO }
+
 public class FarmScript : MonoBehaviour
 {
      public FarmType farmType;
@@ -27,9 +29,7 @@ public class FarmScript : MonoBehaviour
           plantGrowingInProgress = false;
           plantGrowTimer = plantGrowTimerInit = 0f;
           plantFullGrowTime = 15;
-
-          /*farmType = FarmType.NOTHING;
-          stage = 0;*/
+          
      }
      
      void Update()
@@ -43,18 +43,6 @@ public class FarmScript : MonoBehaviour
      {
           SpriteChangeByStage();
      }
-     /*
-     public void OnMouseOver()
-     {
-          if (Input.GetMouseButtonDown(1) && GlobVars.selectedWorkerCount == 0)
-          {
-               Debug.Log("Pressed right button on Farm.");
-               menuShow = true;
-               menuShowPosition = Input.mousePosition;
-               menuShowPosition.y = Screen.height - menuShowPosition.y;
-          }
-     }
-     */
      public void StartPlantGrowProgress()
      {
           if (farmIsReadyToGrowPlants)
@@ -200,7 +188,7 @@ public class FarmScript : MonoBehaviour
      }
 
 
-     public string ToString()
+     public override string ToString()
      {
           string returnString = "";
           returnString = "farm type: " + farmType.ToString() + "\n\t stage: " + stage + "\n\t ready to grow plants: " + farmIsReadyToGrowPlants.ToString() + "\n\t ready to harvest: " + farmIsReadyToHarvest.ToString() + "\n\t growing in progress: " + plantGrowingInProgress.ToString();

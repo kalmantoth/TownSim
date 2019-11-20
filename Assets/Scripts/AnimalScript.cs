@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.AI;
 using Random = System.Random;
 
+public enum AnimalType { DEER }
+
 public class AnimalScript : MonoBehaviour
 {
 
@@ -45,7 +47,7 @@ public class AnimalScript : MonoBehaviour
           
           isFleeing = false;
 
-          animalLeavingPoint = GameObject.Find("AnimalLeavingPoint");
+          animalLeavingPoint = GameObject.Find("/AnimalController/AnimalLeavingPoint");
 
           rnd = new Random();
 
@@ -97,15 +99,15 @@ public class AnimalScript : MonoBehaviour
           Vector3 pointToFace = new Vector3();
           pointToFace = target.transform.position;
 
-          if (pointToFace.x - transform.position.x > 0 || movingVelocity.x > 0) // Facing Right
+          if (movingVelocity.x <= 0) // Facing Right
           {
                //Debug.Log("Deer is facing right.");
-               this.transform.FindChild("deer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+               this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
           }
           else // Facing Left
           {
                //Debug.Log("Deer is facing left.");
-               this.transform.FindChild("deer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+               this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
 
           }
 
@@ -174,7 +176,7 @@ public class AnimalScript : MonoBehaviour
           GlobVars.infoPanelGameObject = this.gameObject;
      }
 
-     public string ToString()
+     public override string ToString()
      {
           return animalName + "\n\tanimal type: " + animalType.ToString() + "\n\tis fleeing: " + isFleeing.ToString();
      }

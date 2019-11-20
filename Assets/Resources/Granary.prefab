@@ -14,7 +14,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &7565559062771568412
 Transform:
@@ -45,7 +45,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &2790097198987172608
 Transform:
@@ -127,7 +127,7 @@ GameObject:
   m_TagString: Object
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &5161348501577508267
 Transform:
@@ -161,7 +161,10 @@ MonoBehaviour:
   buildingName: Granary
   isBuildingInUse: 0
   itemGroup: 0
+  selectedActiveItemType: 0
   workerTargetPoint: {fileID: 0}
+  menuShow: 0
+  menuShowPosition: {x: 0, y: 0, z: 0}
 --- !u!208 &1954066496569649907
 NavMeshObstacle:
   m_ObjectHideFlags: 0

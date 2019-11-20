@@ -4,30 +4,86 @@ using UnityEngine;
 using System;
 
 
-public enum ItemType { NOTHING, WOOD, STONE, GOLD, BERRY, RAW_MEAT, COOKED_MEAT, RAW_FISH, COOKED_FISH, POTATO, BAKED_POTATO, WHEAT, BREAD, ANYTHING};
-public enum ItemGroup { NOTHING, RESOURCE, FOOD, EDIBLE_FOOD, ALL };
+public enum ItemType { NOTHING, ANYTHING, WOOD, STONE, BERRY, RAW_MEAT, COOKED_MEAT, RAW_FISH, COOKED_FISH, POTATO, BAKED_POTATO, WHEAT, BREAD};
+public enum ItemGroup { NOT_SPECIFIED, RESOURCE, FOOD, EDIBLE_FOOD };
+public enum InventoryType { EMPTY, RESOURCE, FOOD, ALL }
 
-
+public static class DefaultItems
+{
+     public static Item wood = new Item(ItemType.WOOD, "Wood", 1, ItemGroup.RESOURCE);
+     public static Item stone = new Item(ItemType.STONE, "Stone", 1, ItemGroup.RESOURCE);
+     public static Item berry = new Item(ItemType.BERRY, true, true, 1, "Raspberry", 1, ItemGroup.EDIBLE_FOOD);
+     public static Item rawMeat = new Item(ItemType.RAW_MEAT, true, false, 0, "Raw meat", 5, ItemGroup.FOOD);
+     public static Item rawFish = new Item(ItemType.RAW_FISH, true, false, 0, "Raw fish", 5, ItemGroup.FOOD);
+     public static Item cookedMeat = new Item(ItemType.COOKED_MEAT, true, true, 5, "Cooked meat", 10, ItemGroup.EDIBLE_FOOD);
+     public static Item cookedFish = new Item(ItemType.COOKED_FISH, true, true, 5, "Cooked fish", 10, ItemGroup.EDIBLE_FOOD);
+     public static Item potato = new Item(ItemType.POTATO, true, false, 0, "Potato", 1, ItemGroup.FOOD);
+     public static Item bakedPotato = new Item(ItemType.BAKED_POTATO, true, true, 3, "Baked potato", 8, ItemGroup.EDIBLE_FOOD);
+     public static Item wheat = new Item(ItemType.WHEAT, true, false, 0, "Wheat sack", 5, ItemGroup.FOOD);
+     public static Item bread = new Item(ItemType.BREAD, true, true, 5, "Bread", 10, ItemGroup.EDIBLE_FOOD);
+}
 
 public class Item
 {
      public ItemType itemType;
+     public ItemGroup itemGroup;
      public int minQuantity;
      public int maxQuantity;
      public int currentQuantity;
-     public string itemName;
      public bool isFood;
      public bool isEdible;
+     public int nutritionalValue;
+     public string itemName;
+     public int value;
 
+     public Item(Item item)
+     {
+          this.itemType = item.itemType;
+          this.itemGroup = item.itemGroup;
+          this.minQuantity = item.minQuantity;
+          this.maxQuantity = item.maxQuantity;
+          this.currentQuantity = item.currentQuantity;
+          this.isFood = item.isFood;
+          this.isEdible = item.isEdible;
+          this.nutritionalValue = item.nutritionalValue;
+          this.itemName = item.itemName;
+          this.value = item.value;
+     }
+
+     public Item(ItemType itemType, string itemName, int value, ItemGroup itemGroup)
+     {
+          this.itemType = itemType;
+          this.minQuantity = 0;
+          this.maxQuantity = this.currentQuantity = 0;
+          this.itemName = itemName;
+          this.isFood = this.isEdible = false;
+          this.value = value;
+          this.itemGroup = itemGroup;
+     }
+
+     public Item(ItemType itemType, bool isFood, bool isEdible, int nutritionalValue, string itemName, int value, ItemGroup itemGroup)
+     {
+          this.itemType = itemType;
+          this.minQuantity = 0;
+          this.maxQuantity = this.currentQuantity = 0;
+          this.itemName = itemName;
+          this.isFood = isFood;
+          this.isEdible = isEdible;
+          this.nutritionalValue = nutritionalValue;
+          this.value = value;
+          this.itemGroup = itemGroup;
+     }
+     
      public Item(ItemType itemType)
      {
           this.itemType = itemType;
           this.minQuantity = 0;
           this.maxQuantity = 100;
           this.currentQuantity = 0;
-
+          
           this.itemName = "";
-          itemEdibleCheckInConstructor(itemType);
+          this.value = 0;
+          ItemEdibleCheckInConstructor(itemType);
      }
 
      public Item(ItemType itemType, int maxQuantity)
@@ -37,7 +93,8 @@ public class Item
           this.maxQuantity = maxQuantity;
           
           this.itemName = "";
-          itemEdibleCheckInConstructor(itemType);
+          this.value = 0;
+          ItemEdibleCheckInConstructor(itemType);
 
      }
 
@@ -52,11 +109,12 @@ public class Item
           else this.currentQuantity = currentQuantity;
           
           this.itemName = "";
-          itemEdibleCheckInConstructor(itemType);
+          this.value = 0;
+          ItemEdibleCheckInConstructor(itemType);
 
      }
 
-     private void itemEdibleCheckInConstructor(ItemType itemType)
+     private void ItemEdibleCheckInConstructor(ItemType itemType)
      {
           switch (itemType)
           {
@@ -101,9 +159,36 @@ public class Item
           return false;
      }
      
-     public string ToString()
+     
+     public override string ToString()
      {
           return itemType.ToString() + " (" + currentQuantity + "/" + maxQuantity + ")";
+     }
+     
+     public string ToStringAllStat()
+     {
+          return itemType + " " + itemGroup + " " + minQuantity + " " + maxQuantity + " " + currentQuantity + " " + isFood + " " + isEdible + " " + nutritionalValue + " " + itemName + " " + value;
+     }
+
+     public override bool Equals(object obj)
+     {
+          return obj is Item item &&
+                 itemType == item.itemType &&
+                 itemGroup == item.itemGroup &&
+                 minQuantity == item.minQuantity &&
+                 maxQuantity == item.maxQuantity &&
+                 currentQuantity == item.currentQuantity &&
+                 isFood == item.isFood &&
+                 isEdible == item.isEdible &&
+                 nutritionalValue == item.nutritionalValue &&
+                 itemName.Equals(item.itemName) &&
+                 value == item.value;
+     }
+
+     // Need to implement because of the equals method
+     public override int GetHashCode()
+     {
+          return base.GetHashCode();
      }
 }
 
@@ -111,27 +196,65 @@ public class Item
 
 public class Inventory
 {
-     string[] itemTypeEnumNames = Enum.GetNames(typeof(ItemType));
-     ItemType[] itemTypeEnumValues = (ItemType[])Enum.GetValues(typeof(ItemType));
+     private string[] itemTypeEnumNames = Enum.GetNames(typeof(ItemType));
+     private ItemType[] itemTypeEnumValues = (ItemType[])Enum.GetValues(typeof(ItemType));
 
-     public ItemGroup itemGroup;
+     public InventoryType inventoryType;
      public Item[] items = new Item[Enum.GetValues(typeof(ItemType)).Length];
+     
 
      
 
-     public Inventory(int maxItemQuantity = 100, ItemGroup itemGroup = ItemGroup.ALL)
+     public Inventory(int maxItemQuantity = 100, InventoryType inventoryType = InventoryType.ALL)
      {
-          this.itemGroup = itemGroup;
-
-
-          for(int i = 0; i < itemTypeEnumValues.Length; i++)
-          {
-               items[i] = new Item(itemTypeEnumValues[i], maxItemQuantity);
-          }
+          this.inventoryType = inventoryType;
           
+          // Szval ha az adott inventory típuson
+
+
+          if(inventoryType == InventoryType.FOOD)
+          {
+               for (int i = 0; i < itemTypeEnumValues.Length; i++)
+               {
+                    foreach (System.Reflection.FieldInfo field in typeof(DefaultItems).GetFields())
+                    {
+                         Item defItem = (Item)field.GetValue(null);
+                         if(defItem.itemType == itemTypeEnumValues[i] && (defItem.itemGroup == ItemGroup.FOOD || defItem.itemGroup == ItemGroup.EDIBLE_FOOD))
+                         {
+                              items[i] = new Item(itemTypeEnumValues[i], maxItemQuantity);
+                         }
+                         else items[i] = new Item(itemTypeEnumValues[i], 0);
+                    }
+               }
+          }
+          else if(inventoryType == InventoryType.RESOURCE)
+          {
+               for (int i = 0; i < itemTypeEnumValues.Length; i++)
+               {
+                    foreach (System.Reflection.FieldInfo field in typeof(DefaultItems).GetFields())
+                    {
+                         Item defItem = (Item)field.GetValue(null);
+                         if (defItem.itemType == itemTypeEnumValues[i] && defItem.itemGroup == ItemGroup.RESOURCE)
+                         {
+                              items[i] = new Item(itemTypeEnumValues[i], maxItemQuantity);
+                         }
+                         else items[i] = new Item(itemTypeEnumValues[i], 0);
+                    }
+
+               }
+          }
+          else if(inventoryType == InventoryType.ALL)
+          {
+               for (int i = 0; i < itemTypeEnumValues.Length; i++)
+               {
+                    items[i] = new Item(itemTypeEnumValues[i], maxItemQuantity);
+               }
+          }
+
+
      }
 
-     public List<ItemType> findNonEmptyEdibleItemTypes()
+     public List<ItemType> FindNonEmptyEdibleItemTypes()
      {
           List<ItemType> nonEmptyEdibleItemTypes = new List<ItemType>();
 
@@ -247,7 +370,7 @@ public class Inventory
      }
      
     
-     public void TransferFullItemStackToInventory(Inventory otherInventory, ItemGroup otherInventoryType) // Transfer full items from the main inventory to the other     
+     public void TransferFullItemStackToInventory(Inventory otherInventory, InventoryType otherInventoryType) // Transfer full items from the main inventory to the other     
      {
           for (int i = 0; i < itemTypeEnumValues.Length; i++) 
           {
@@ -264,7 +387,7 @@ public class Inventory
      }
     
 
-     public string ToString()
+     public override string ToString()
      {
           string returnString = "";
           foreach (Item item in items)
