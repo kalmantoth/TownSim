@@ -83,6 +83,7 @@ MonoBehaviour:
   animalType: 0
   animalName: Deer
   isFleeing: 0
+  deerSpriteContainer: {fileID: 7217443471116713731}
   workerTargetPoint: {fileID: 0}
 --- !u!195 &4475991814141241196
 NavMeshAgent:
@@ -145,11 +146,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 4475991814141241184}
     m_Modifications:
-    - target: {fileID: 8033502003680924465, guid: 55f1adcde21af3540aa0100adb1fd381,
-        type: 3}
-      propertyPath: m_Name
-      value: deer
-      objectReference: {fileID: 0}
     - target: {fileID: 7469713212483457963, guid: 55f1adcde21af3540aa0100adb1fd381,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -215,9 +211,20 @@ PrefabInstance:
       propertyPath: m_LocalScale.y
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 8033502003680924465, guid: 55f1adcde21af3540aa0100adb1fd381,
+        type: 3}
+      propertyPath: m_Name
+      value: deer
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 2338504282873714027, guid: 55f1adcde21af3540aa0100adb1fd381,
     type: 3}
+--- !u!1 &7217443471116713731 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8033502003680924465, guid: 55f1adcde21af3540aa0100adb1fd381,
+    type: 3}
+  m_PrefabInstance: {fileID: 816621694047611954}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7853426236520644505 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7469713212483457963, guid: 55f1adcde21af3540aa0100adb1fd381,

@@ -200,14 +200,30 @@ public static class GlobVars
      public static float ingameClockInFloat = 0f;
      private static List<GameObject> workers = new List<GameObject>();
      private static List<GameObject> selectedWorkers = new List<GameObject>();
-     public static List<GameObject> storageBuildings = new List<GameObject>(); // should change it to private WIP
+     private static List<GameObject> storageBuildings = new List<GameObject>(); // should change it to private WIP
      private static List<Item> unlockedItems = new List<Item>();
      private static List<Item> storedItems = new List<Item>();
      public static bool isTradingPanelOpen;
      public static Season season = Season.SUMMER;
      public static bool firstDayOfSeason;
      public static bool tradingIsEnabled = false;
-     
+
+     public static GameObject[] GetStorageBuildings()
+     {
+          return storageBuildings.ToArray();
+     }
+
+     public static bool AddBuildingToStorageBuildings(GameObject building)
+     {
+          if (!storageBuildings.Contains(building))
+          {
+               storageBuildings.Add(building);
+               return true;
+          }
+          else return false;
+
+     }
+
      public static Item[] GetStoredItems()
      {
           return storedItems.ToArray();
@@ -217,6 +233,7 @@ public static class GlobVars
      {
           storedItems.AddRange(unlockedItems);
      }
+
 
      public static void RecountStoredItems()
      {
@@ -424,7 +441,7 @@ public class GameMasterScript : MonoBehaviour
      public GameObject[] animalSpawnPoints;
      public GameObject[] animalSpawnDestinations;
 
-     private GameObject buildingGrid;
+     public GameObject buildingGrid;
 
      private Random rnd;
 
@@ -487,7 +504,7 @@ public class GameMasterScript : MonoBehaviour
           // CHEAT MODE - LOTS OF SUPPLIES
           // GlobVars.WOOD = GlobVars.STONE = GlobVars.FOOD = GlobVars.GOLD = 10000;
 
-          buildingGrid = GameObject.Find("Buildings");
+          
 
           rnd = new Random();
 
@@ -498,26 +515,28 @@ public class GameMasterScript : MonoBehaviour
           BuildingPanelVisibilityButton.onClick.AddListener(OpenBuildingPanel);
           TradingPanelVisibilityButton.onClick.AddListener(OpenTradingPanel);
           InfoPanelVisibilityButton.onClick.AddListener(OpenInfoPanel);
-
-
-
-
-          FindAllPlacedStorageBuilding();
+          
+          
 
           isMouseSelecting = false;
 
           InitAnimalSpawnSetting();
-
+          
           // Set all default items unlocked
           foreach (System.Reflection.FieldInfo field in typeof(DefaultItems).GetFields())
           {
                GlobVars.AddUnlockedItem((Item)field.GetValue(null));
           }
+          
+     }
 
+
+     private void Start()
+     {
+          FindAllPlacedStorageBuilding();
           GlobVars.SetStoredItems();
           GlobVars.RecountStoredItems();
      }
-     
      void Update()
      {
           deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
@@ -776,15 +795,11 @@ public class GameMasterScript : MonoBehaviour
      public void FindAllPlacedStorageBuilding()
      {
           // Itarate trought the Buildings gameobject's children and add it to the building list
-          foreach (Transform building in GameObject.Find("/BaseGrid/Buildings").transform)
+          foreach (Transform building in buildingGrid.transform)
           {
                if (building.GetComponent<BuildingScript>() && building.GetComponent<BuildingScript>().inventory != null)
                {
-                    if (!GlobVars.storageBuildings.Contains(building.gameObject))
-                    {
-                         Debug.Log(building.GetComponent<BuildingScript>().buildingName + " has been added to the building list");
-                         GlobVars.storageBuildings.Add(building.gameObject);
-                    }
+                    if(GlobVars.AddBuildingToStorageBuildings(building.gameObject)) Debug.Log(building.GetComponent<BuildingScript>().buildingName + " has been added to the building list");
 
                }
           }
@@ -794,7 +809,7 @@ public class GameMasterScript : MonoBehaviour
      {
           int value = decreaseValue;
 
-          foreach (GameObject building in GlobVars.storageBuildings)
+          foreach (GameObject building in GlobVars.GetStorageBuildings())
           {
 
                if (building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.inventoryType == Utils.SpecifyInventoryType(itemType) || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL))
@@ -825,7 +840,7 @@ public class GameMasterScript : MonoBehaviour
      {
           int value = decreaseValue;
 
-          foreach (GameObject building in GlobVars.storageBuildings)
+          foreach (GameObject building in GlobVars.GetStorageBuildings())
           {
                if (building.GetComponent<BuildingScript>().inventory != null && (building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.FOOD || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL))
                {

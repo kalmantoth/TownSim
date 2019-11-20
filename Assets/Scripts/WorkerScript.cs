@@ -534,7 +534,7 @@ public class WorkerScript : MonoBehaviour
           {
                float minDistance = float.MaxValue;
                int loadQuantity = 0;
-               foreach (GameObject building in GlobVars.storageBuildings)
+               foreach (GameObject building in GlobVars.GetStorageBuildings())
                {
                     bool isBuildingLoadAble = false;
                     if (Utils.SpecifyInventoryType(itemType) == building.GetComponent<BuildingScript>().inventory.inventoryType || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL)
@@ -590,7 +590,7 @@ public class WorkerScript : MonoBehaviour
           {
                float minDistance = float.MaxValue;
                int unloadQuantity = 0;
-               foreach (GameObject building in GlobVars.storageBuildings)
+               foreach (GameObject building in GlobVars.GetStorageBuildings())
                {
                     bool isBuildingUnloadAble = false;
                     if (Utils.SpecifyInventoryType(itemType) == building.GetComponent<BuildingScript>().inventory.inventoryType || building.GetComponent<BuildingScript>().inventory.inventoryType == InventoryType.ALL)

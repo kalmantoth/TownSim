@@ -21,6 +21,7 @@ public class AnimalScript : MonoBehaviour
      private Vector3 movingVelocity;
      private Vector3 lastPosition;
 
+     public GameObject deerSpriteContainer;
 
      private GameObject animalLeavingPoint;
      
@@ -43,7 +44,7 @@ public class AnimalScript : MonoBehaviour
           lastPosition = this.transform.position;
 
           //Rotating the Deer's sprite for the NavMeshAgent
-          transform.Find("deer").GetComponent<Transform>().Rotate(90, 0, 0);
+          deerSpriteContainer.GetComponent<Transform>().Rotate(90, 0, 0);
           
           isFleeing = false;
 
@@ -102,12 +103,12 @@ public class AnimalScript : MonoBehaviour
           if (movingVelocity.x <= 0) // Facing Right
           {
                //Debug.Log("Deer is facing right.");
-               this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+               deerSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
           }
           else // Facing Left
           {
                //Debug.Log("Deer is facing left.");
-               this.transform.Find("deer").GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+               deerSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
 
           }
 
@@ -149,7 +150,16 @@ public class AnimalScript : MonoBehaviour
 
      public void ModifyRenderingOrder()
      {
-          /* WIP
+          if (spritesInitialRenderingOrder == null)
+          {
+               spritesInitialRenderingOrder = new ArrayList();
+               foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer), true))
+               {
+                    spritesInitialRenderingOrder.Add(sprite.sortingOrder);
+                    //Debug.Log("Init sprite name in list:" + sprite.gameObject.ToString());
+               }
+          }
+
           int i = 0;
           // Setting render sorting order by finding gameobject's global position;
           foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer)))
@@ -158,8 +168,6 @@ public class AnimalScript : MonoBehaviour
                sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) + localRenderingOrderInSprite);
                i++;
           }
-
-           */
 
      }
 
