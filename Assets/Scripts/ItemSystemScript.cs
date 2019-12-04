@@ -86,13 +86,13 @@ public class Item
           ItemEdibleCheckInConstructor(itemType);
      }
 
-     public Item(ItemType itemType, int maxQuantity)
+     public Item(ItemType itemType, int maxQuantity, string itemName = "")
      {
           this.itemType = itemType;
           this.minQuantity = this.currentQuantity = 0;
           this.maxQuantity = maxQuantity;
           
-          this.itemName = "";
+          this.itemName = itemName;
           this.value = 0;
           ItemEdibleCheckInConstructor(itemType);
 
@@ -221,7 +221,8 @@ public class Inventory
                          Item defItem = (Item)field.GetValue(null);
                          if(defItem.itemType == itemTypeEnumValues[i] && (defItem.itemGroup == ItemGroup.FOOD || defItem.itemGroup == ItemGroup.EDIBLE_FOOD))
                          {
-                              items[i] = new Item(itemTypeEnumValues[i], maxItemQuantity);
+                              items[i] = new Item(defItem.itemType, maxItemQuantity, defItem.itemName);
+                              Debug.Log("Granary is initalized with item: " + items[i].itemName + " quantity: " + items[i].currentQuantity + " / " + items[i].maxQuantity);
                          }
                          else items[i] = new Item(itemTypeEnumValues[i], 0);
                     }
@@ -236,7 +237,8 @@ public class Inventory
                          Item defItem = (Item)field.GetValue(null);
                          if (defItem.itemType == itemTypeEnumValues[i] && defItem.itemGroup == ItemGroup.RESOURCE)
                          {
-                              items[i] = new Item(itemTypeEnumValues[i], maxItemQuantity);
+                              items[i] = new Item(defItem.itemType, maxItemQuantity, defItem.itemName);
+                              Debug.Log("Storage is initalized with item: " + items[i].itemName + " quantity: " + items[i].currentQuantity + " / " + items[i].maxQuantity);
                          }
                          else items[i] = new Item(itemTypeEnumValues[i], 0);
                     }

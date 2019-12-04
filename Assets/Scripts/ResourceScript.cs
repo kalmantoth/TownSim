@@ -8,7 +8,6 @@ public class ResourceScript : MonoBehaviour
      public ItemType itemType;
      public int fullAmount, currentAmount;
      public List<GameObject> userList = new List<GameObject>();
-     private Quaternion startingPosition;
      public GameObject workerTargetPoint;
 
      private SpriteRenderer resourceSpriteRenderer;
@@ -19,16 +18,7 @@ public class ResourceScript : MonoBehaviour
           workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
 
           resourceSpriteRenderer = this.GetComponentInChildren<SpriteRenderer>();
-
-          // Setting render sorting order by finding gameobject's global position;
-          //this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
-
-          /*
-          if (!this.gameObject.GetComponent<AnimalScript>())
-          {
-               startingPosition = this.gameObject.transform.GetChild(0).gameObject.transform.rotation;   // Starting position of the Sprite (animation)
-          }
-          */
+          
           ModifyRenderingOrder();
      }
      

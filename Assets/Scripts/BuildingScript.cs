@@ -32,15 +32,16 @@ public class BuildingScript : MonoBehaviour
 
           indoorWorkers = new List<GameObject>();
 
+          isBuildingInUse = false;
+
           ModifyRenderingOrder();
 
           workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
           
-          isBuildingInUse = false;
           
           
           // Setting render sorting order by finding gameobject's global position;
-               this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
+          //     this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
           
 
           if (buildingType == BuildingType.STORAGE)
@@ -55,35 +56,29 @@ public class BuildingScript : MonoBehaviour
 
           if (buildingType == BuildingType.TOWNHALL)
           {
-               inventory = new Inventory(75, InventoryType.ALL);
+               inventory = new Inventory(125, InventoryType.ALL);
                inventory.ModifyInventory(ItemType.WOOD, 25);
                inventory.ModifyInventory(ItemType.STONE, 25);
                inventory.ModifyInventory(ItemType.BERRY, 35);
           }
           
           if(this.GetComponent<Animator>() != null) buildingAnimator = this.GetComponent<Animator>();
-
-
-          if (buildingType == BuildingType.TRADINGPOST)
-          {
-               GlobVars.tradingIsEnabled = true;
-          }
+          
      }
 
      void Update()
      {
+          BuildingUsageManager();
+
           // If there is a building animator then update with the building's current status
-          if(buildingAnimator != null)
+          if (buildingAnimator != null)
           {
                buildingAnimator.SetBool("IsWinter", GlobVars.season == Season.WINTER ? true : false);
                buildingAnimator.SetBool("BuildingIsActive", isBuildingInUse);
           }
 
-          BuildingUsageManager();
-
-          if (GlobVars.ingameClockInFloat % 0.1f == 0)
-          {   
-          }
+          
+          
      }
 
      private void LateUpdate()
@@ -321,14 +316,14 @@ public class BuildingScript : MonoBehaviour
      {
           string returnString = buildingName + "\n\tbuilding type: " + buildingType.ToString();
 
-          if (buildingType == BuildingType.STORAGE || buildingType == BuildingType.GRANARY || buildingType == BuildingType.TOWNHALL) returnString += "\n\t inventory: " + inventory.ToString();
+          if (buildingType == BuildingType.STORAGE || buildingType == BuildingType.GRANARY || buildingType == BuildingType.TOWNHALL) returnString += "\n\tinventory: " + inventory.ToString();
           else if(buildingType == BuildingType.FARM)
           {
                returnString += "\n\t " + gameObject.GetComponent<FarmScript>().ToString();
           }
           else if (buildingType == BuildingType.CAMPFIRE)
           {
-               returnString += "\n\t selected food type: " + selectedActiveItemType.ToString();
+               returnString += "\n\tselected food type: " + selectedActiveItemType.ToString();
           }
 
           if (isBuildingInUse)
@@ -336,7 +331,7 @@ public class BuildingScript : MonoBehaviour
                if (buildingType == BuildingType.MILLBAKERY)
                {
                     ItemType doneFood = Utils.SpecifyDonePairOfUndoneFood(selectedActiveItemType);
-                    returnString += "\n\t (worker: (" + selectedActiveItemType + "/" + doneFood + "))\t";
+                    returnString += "\n\t(worker: (" + selectedActiveItemType + "/" + doneFood + "))\t";
                     foreach (GameObject worker in indoorWorkers)
                     {
                          WorkerScript ws = worker.GetComponent<WorkerScript>();

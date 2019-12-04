@@ -23,8 +23,7 @@ public class TradeScript : MonoBehaviour
 
      private List<Item> tradeItems;
      private List<TradeItemValue> tradeItemValues;
-
-     //private float tradePanelRefreshTimer, tradePanelRefreshTimerInit;
+     
 
      
      // Start is called before the first frame update
@@ -34,20 +33,12 @@ public class TradeScript : MonoBehaviour
 
           tradeItems = new List<Item>();
           tradeItemValues = new List<TradeItemValue>();
-
-          //tradePanelRefreshTimer = tradePanelRefreshTimerInit = 0.1f;
+          
           InitTradeItems();
      }
 
      void Update()
      {
-          /*
-          tradePanelRefreshTimer -= Time.deltaTime;
-          if (GlobVars.isTradingPanelOpen && tradePanelRefreshTimer < 0)
-          {
-               tradePanelRefreshTimer = tradePanelRefreshTimerInit;
-          }
-          */
 
           RefreshTradeItemsFromStoredItems();
           
@@ -85,14 +76,6 @@ public class TradeScript : MonoBehaviour
 
           for (int i = 0; i < GlobVars.GetStoredItems().Length; i++)
           {
-               /*
-               if (GlobVars.GetStoredItems()[i].currentQuantity != 0)
-               {
-                    Debug.Log("Store: " + GlobVars.GetStoredItems()[i].ToString()); 
-                    Debug.Log("Trade: " + tradeItems[i].ToString());
-                    Debug.Log("tradeItems[i].Equals(GlobVars.GetStoredItems()[i]) " + tradeItems[i].Equals(GlobVars.GetStoredItems()[i]));
-               }
-               */
                if (!tradeItems[i].Equals(GlobVars.GetStoredItems()[i]))
                {
                     tradeItemsUpToDate = false;
@@ -123,8 +106,7 @@ public class TradeScript : MonoBehaviour
                tradeItem.transform.SetParent(TradePanelScrollViewContent.transform);
                tradeItemRowScript = tradeItem.GetComponent<TradeItemRowScript>();
                tradeItemRowScript.MinusButton.interactable = tradeItemRowScript.PlusButton.interactable = true;
-
-               //Debug.Log("Trade: " + tradeItems[i].itemName + " " + tradeItems[i].currentQuantity + " ---------------------------");
+               
 
                quantityMod = tradeItemValues[i].tradeItemQuantityModification;
                valueMod = tradeItemValues[i].tradeItemValueModification;
@@ -143,7 +125,7 @@ public class TradeScript : MonoBehaviour
           }
      }
 
-     public void RemoveTradeItemRow()
+     public void RemoveTradeItemRows()
      {
           while (TradePanelScrollViewContent.transform.childCount > 0)
           {
@@ -171,7 +153,7 @@ public class TradeScript : MonoBehaviour
      public void UpdateTradePanel()
      {
           Debug.Log("Trade panel rows are refreshed...");
-          RemoveTradeItemRow();
+          RemoveTradeItemRows();
           AddTradeItemRow();
           RefreshTradeGoldSum();
      }
@@ -203,9 +185,7 @@ public class TradeScript : MonoBehaviour
           ResetTradeItemValues();
           RefreshTradeGoldSum();
           UpdateTradePanel();
-
-          /*
-          */
+          
      }
 
 

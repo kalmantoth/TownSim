@@ -197,16 +197,13 @@ public static class GlobVars
      public static int POPULATION = 0, WOOD = 0, STONE = 0 , FOOD = 0, GOLD = 0, RAW_FOOD = 0;
      public static GameObject infoPanelGameObject = null;
      public static int ingameClock = 0;
-     public static float ingameClockInFloat = 0f;
+     public static Season season = Season.SUMMER;
+     public static bool firstDayOfSeason;
      private static List<GameObject> workers = new List<GameObject>();
      private static List<GameObject> selectedWorkers = new List<GameObject>();
      private static List<GameObject> storageBuildings = new List<GameObject>(); // should change it to private WIP
      private static List<Item> unlockedItems = new List<Item>();
      private static List<Item> storedItems = new List<Item>();
-     public static bool isTradingPanelOpen;
-     public static Season season = Season.SUMMER;
-     public static bool firstDayOfSeason;
-     public static bool tradingIsEnabled = false;
 
      public static GameObject[] GetStorageBuildings()
      {
@@ -231,7 +228,11 @@ public static class GlobVars
 
      public static void SetStoredItems()
      {
-          storedItems.AddRange(unlockedItems);
+          if(storedItems.Count == 0)
+          {
+               storedItems.AddRange(unlockedItems);
+          }
+          
      }
 
 
@@ -255,6 +256,7 @@ public static class GlobVars
                          {
                               item.currentQuantity += buildingStorageItem.currentQuantity;
                               item.maxQuantity += buildingStorageItem.maxQuantity;
+                              //if(item.currentQuantity != 0) Debug.Log("Refreshed Globaly stored item: " + item.itemName + " quantity: " + item.currentQuantity + " / " + item.maxQuantity);
                          }
                     }
                }
@@ -333,7 +335,6 @@ public static class GlobVars
                {
                     return building.GetComponent<BuildingScript>().inventory.GetFirstFoodWhich(false);
                }
-
           }
           return ItemType.NOTHING;
      }
@@ -411,10 +412,11 @@ public static class GlobVars
 
 public class GameMasterScript : MonoBehaviour
 {
-     
+
      public Camera cam;
      public Camera assistCam;
 
+     // UI elemen definitions
      public Text SupplyText;
      public Text GameDateText;
      public Text TownLevelText;
@@ -428,108 +430,92 @@ public class GameMasterScript : MonoBehaviour
      public Button InfoPanelVisibilityButton;
      public Dropdown BuildingTypeDropdown;
      public Button TownLevelUpButton;
-     
-     public int yearPassInMinutes;
 
-     private DateTime gameTime;
-     private float dateIncreaseTimer, dateIncreaseTimerInitial , foodConsumptionTimer , foodConsumptionTimerInitial;
-     private float animalSpawnTimer;
+     public GameObject buildingGrid;
+     public int yearPassInMinutes;
+     public int townLevel;
+
+
+     private bool showFpsMeter;
+     private float deltaTimeFpsMeter;
+
+     private DateTime gameDate;
+     private float dateIncreaseTimer, dateIncreaseTimerInitial, foodConsumptionTimer, foodConsumptionTimerInitial, animalSpawnTimer;
      private float ingameClockInFloat;
+
+     private GameObject[] animalSpawnPoints, animalSpawnDestinations;
+     private bool isAnimalSpawnOn;
 
      private bool isBuildingModeOn;
 
-     public GameObject[] animalSpawnPoints;
-     public GameObject[] animalSpawnDestinations;
-
-     public GameObject buildingGrid;
+     private int goalPopulation;
 
      private Random rnd;
-
-     private int townLevel;
 
 
      private bool isMouseSelecting;
      private Vector3 mousePosition1;
-     
-
-     private Transform mapTopRightCorner;
-     private Transform mapBottomLeftCorner;
+     private Transform mapTopRightCorner, mapBottomLeftCorner;
      private Bounds mapBounds;
 
-     public bool showFpsMeter;
-     private float deltaTime;
+
 
      void Awake()
      {
           // Application optimizing
           Application.targetFrameRate = 60;
-          deltaTime = 0.0f;
+          deltaTimeFpsMeter = 0.0f;
           showFpsMeter = false;
-
-
 
           // Map Corner settings
           mapTopRightCorner = this.gameObject.transform.Find("MapTopRightCorner").gameObject.transform;
           mapBottomLeftCorner = this.gameObject.transform.Find("MapBottomLeftCorner").gameObject.transform;
           mapBounds = Utils.GetBoundsOfTwoTransformPosition(mapTopRightCorner.position, mapBottomLeftCorner.position);
-          
 
-          // Timer settings
-          gameTime = new DateTime(1525, 6, 1);
+          // Ingame time and Timer settings
+          gameDate = new DateTime(1525, 6, 1);
           dateIncreaseTimerInitial = (yearPassInMinutes * 60f) / (365f);
-          //Debug.Log(dateIncreaseTimerInitial);
           dateIncreaseTimer = dateIncreaseTimerInitial;
-
-
-
           ingameClockInFloat = 0f;
-
-          foodConsumptionTimer = foodConsumptionTimerInitial = dateIncreaseTimerInitial * 7; // Every week the food decrease
+          foodConsumptionTimer = foodConsumptionTimerInitial = dateIncreaseTimerInitial * 7; // By this timer every week the food decrease 
 
           // First spawn of animal
+          isAnimalSpawnOn = false;
           animalSpawnTimer = 1f;
+          InitAnimalSpawnSettings();
 
           // Building mode settings
           isBuildingModeOn = false;
+          
+          // Rectangle unit selection settings
+          isMouseSelecting = false;
+
+          // Town level settings
+          TownLevelUpButton.gameObject.SetActive(false);
+          TownLevelUpButton.onClick.AddListener(LevelUpTown);
+          TownLevelManager();
 
           // Default UI settings
-
           SupplyText.text = "SUPPLIES   Wood: " + GlobVars.WOOD + "   Stone: " + GlobVars.STONE;
-          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day;
+          GameDateText.text = "Date: " + gameDate.Year + "." + gameDate.Month + "." + gameDate.Day;
           TownLevelText.text = "Town level 0";
           InfoPanelTargetDataText.text = "";
 
-          SetBuildingTypeScrollDownMenuOptions();
-
-          // CHEAT MODE - LOTS OF SUPPLIES
-          // GlobVars.WOOD = GlobVars.STONE = GlobVars.FOOD = GlobVars.GOLD = 10000;
-
-          
-
-          rnd = new Random();
-
-          townLevel = 0;
-          TownLevelUpButton.gameObject.SetActive(false);
-          TownLevelUpButton.onClick.AddListener(TownLevelUp);
-
+          // UI button event listeners
           BuildingPanelVisibilityButton.onClick.AddListener(OpenBuildingPanel);
           TradingPanelVisibilityButton.onClick.AddListener(OpenTradingPanel);
           InfoPanelVisibilityButton.onClick.AddListener(OpenInfoPanel);
-          
-          
 
-          isMouseSelecting = false;
+          rnd = new Random();
 
-          InitAnimalSpawnSetting();
-          
+          // Item settings
           // Set all default items unlocked
           foreach (System.Reflection.FieldInfo field in typeof(DefaultItems).GetFields())
           {
                GlobVars.AddUnlockedItem((Item)field.GetValue(null));
           }
-          
-     }
 
+     }
 
      private void Start()
      {
@@ -537,24 +523,21 @@ public class GameMasterScript : MonoBehaviour
           GlobVars.SetStoredItems();
           GlobVars.RecountStoredItems();
      }
+
      void Update()
      {
-          deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
-          
+          deltaTimeFpsMeter += (Time.unscaledDeltaTime - deltaTimeFpsMeter) * 0.1f;
 
           KeyPressManager();
           UpdateIngameTime();
-          //CheckTownUpgradePossibility();
-          
+
           ManageFoodConsumption();
-          GlobVars.RecountStoredItemsToTopUIBar();
           GlobVars.RecountStoredItems();
+          GlobVars.RecountStoredItemsToTopUIBar();
           UpdateTopUIBar();
           SpawnAnimals();
+          CheckTownUpgradePossibility();
 
-          
-
-          
 
           if (!EventSystem.current.IsPointerOverGameObject())
           {
@@ -563,21 +546,17 @@ public class GameMasterScript : MonoBehaviour
                RectangleUnitSelect();
                CameraMovementManagement();
           }
-          
-          UpdateSeason();
-          UpdateInfoPanelText();
-          
+
 
      }
+
      private void LateUpdate()
      {
-          
+          UpdateSeason();
+          UpdateInfoPanelText();
           if (GlobVars.firstDayOfSeason) ChangeGroundBySeason();
-          
+
      }
-
-
-
 
      private void OnGUI()
      {
@@ -598,13 +577,122 @@ public class GameMasterScript : MonoBehaviour
                style.alignment = TextAnchor.UpperLeft;
                style.fontSize = h * 2 / 100;
                style.normal.textColor = new Color(0.0f, 0.0f, 0.5f, 1.0f);
-               float msec = deltaTime * 1000.0f;
-               float fps = 1.0f / deltaTime;
+               float msec = deltaTimeFpsMeter * 1000.0f;
+               float fps = 1.0f / deltaTimeFpsMeter;
                string text = string.Format("{0:0.0} ms ({1:0.} fps)", msec, fps);
                GUI.Label(rect, text, style);
           }
-          
 
+
+     }
+
+     public void TownLevelManager()
+     {
+          if (townLevel == 1)
+          {
+               BuildingTypeDropdown.options.Add(new Dropdown.OptionData("House (Wood: 30, Stone: 10)"));
+               goalPopulation = 5;
+          }
+          else if (townLevel == 2)
+          {
+               BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Campfire (Wood: 10, Stone: 5)"));
+               isAnimalSpawnOn = true;
+               goalPopulation = 10;
+          }
+          else if (townLevel == 3)
+          {
+               BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Storage (Wood: 15, Stone: 10)"));
+               BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Granary (Wood: 20, Stone: 5)"));
+               goalPopulation = 20;
+          }
+          else if (townLevel == 4)
+          {
+               BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Farm (Wood: 5, Food: 30)"));
+               BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Mill and Bakery (Wood: 50, Stone: 25)"));
+               goalPopulation = 30;
+          }
+          else if (townLevel == 5)
+          {
+               BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Trading Post (Wood: 125, Stone: 50)"));
+               goalPopulation = 0;
+          }
+
+          if (townLevel >= 1 && townLevel < 5) GoalText.text = "GOAL: Reach " + goalPopulation + " population by building more houses.";
+          else GoalText.text = "";
+
+     }
+
+     public void CheckTownUpgradePossibility()
+     {
+          if (GlobVars.POPULATION >= goalPopulation && goalPopulation != 0)
+          {
+               TownLevelUpButton.gameObject.SetActive(true);
+          }
+
+     }
+
+     public void LevelUpTown()
+     {
+          townLevel += 1;
+          TownLevelManager();
+          TownLevelUpButton.gameObject.SetActive(false);
+     }
+
+     private void PlaceBuildingNear(Vector3 clickPoint)
+     {
+          Vector3 finalPosition = buildingGrid.GetComponent<GridScript>().GetNearestPointOnGrid(clickPoint);
+          Debug.Log("The corrigated point's position is " + finalPosition.ToString());
+
+          GameObject newBuilding = null;
+          if (BuildingTypeDropdown.value == 0 && GlobVars.WOOD >= 30 && GlobVars.STONE >= 10)
+          {
+               newBuilding = Instantiate(Resources.Load("House"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 30); DecreaseResource(ItemType.STONE, 10);
+               SpawnWorker(finalPosition);
+          }
+          else if (BuildingTypeDropdown.value == 1 && GlobVars.WOOD >= 10 && GlobVars.STONE >= 5)
+          {
+               newBuilding = Instantiate(Resources.Load("Campfire"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 10); DecreaseResource(ItemType.STONE, 5);
+          }
+          else if (BuildingTypeDropdown.value == 2 && GlobVars.WOOD >= 15 && GlobVars.STONE >= 10)
+          {
+               newBuilding = Instantiate(Resources.Load("Storage"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 15); DecreaseResource(ItemType.STONE, 10);
+          }
+          else if (BuildingTypeDropdown.value == 3 && GlobVars.WOOD >= 20 && GlobVars.STONE >= 5)
+          {
+               newBuilding = Instantiate(Resources.Load("Granary"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 20); DecreaseResource(ItemType.STONE, 5);
+          }
+          else if (BuildingTypeDropdown.value == 4 && GlobVars.WOOD >= 15 && GlobVars.FOOD >= 30)
+          {
+               newBuilding = Instantiate(Resources.Load("Farm"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 5); DecreaseFood(30);
+          }
+          else if (BuildingTypeDropdown.value == 5 && GlobVars.WOOD >= 50 && GlobVars.FOOD >= 25)
+          {
+               newBuilding = Instantiate(Resources.Load("MillBakery"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 50); DecreaseResource(ItemType.STONE, 25);
+          }
+          else if (BuildingTypeDropdown.value == 6 && GlobVars.WOOD >= 125 && GlobVars.FOOD >= 50)
+          {
+               newBuilding = Instantiate(Resources.Load("TradingPost"), finalPosition, Quaternion.identity) as GameObject;
+               DecreaseResource(ItemType.WOOD, 125); DecreaseResource(ItemType.STONE, 50);
+               TradingPanelVisibilityButton.interactable = true;
+          }
+          else
+          {
+               Debug.Log("Not enough resource to build.");
+          }
+
+          if (newBuilding != null)
+          {
+               newBuilding.transform.SetParent(buildingGrid.GetComponent<Transform>());
+               FindAllPlacedStorageBuilding();
+               GlobVars.RecountStoredItems();
+               GlobVars.RecountStoredItemsToTopUIBar();
+          }
      }
 
      public void OpenBuildingPanel()
@@ -618,15 +706,9 @@ public class GameMasterScript : MonoBehaviour
      public void OpenTradingPanel()
      {
           if (TradingPanel.GetComponent<Animator>().GetBool("PanelOpen"))
-          {
                TradingPanel.GetComponent<Animator>().SetBool("PanelOpen", false);
-               GlobVars.isTradingPanelOpen = false;
-          }
           else
-          {
                TradingPanel.GetComponent<Animator>().SetBool("PanelOpen", true);
-               GlobVars.isTradingPanelOpen = true;
-          }
      }
 
      public void OpenInfoPanel()
@@ -636,28 +718,8 @@ public class GameMasterScript : MonoBehaviour
           else
                InfoPanel.GetComponent<Animator>().SetBool("PanelOpen", true);
      }
-
-     public void CheckTownUpgradePossibility()
-     {
-          if (GlobVars.WOOD >= 200 && GlobVars.STONE >= 200)
-          {
-               TownLevelUpButton.gameObject.SetActive(true);
-          }
-          
-     }
-
-
-     public void TownLevelUp()
-     {
-          townLevel += 1;
-          GlobVars.WOOD -= 200;
-          GlobVars.STONE -= 200;
-          TownLevelUpButton.gameObject.SetActive(false);
-          GoalText.text = "GOAL: None.";
-     }
-
-
-     public void InitAnimalSpawnSetting()
+     
+     public void InitAnimalSpawnSettings()
      {
           int counter = 0;
           Transform AnimalSpawnPointsContainer = GameObject.Find("/AnimalController/AnimalSpawnPoints").transform;
@@ -679,32 +741,30 @@ public class GameMasterScript : MonoBehaviour
 
           Debug.Log(animalSpawnPoints.Length + " animalSpawnPoints and " + animalSpawnDestinations.Length + " animalSpawnDestinations are initalized...");
      }
-
-
+     
      private void SpawnAnimals()
      {
-          animalSpawnTimer -= Time.deltaTime;
-          
-
-          if (animalSpawnTimer <= 0)
+          if (isAnimalSpawnOn)
           {
-               animalSpawnTimer = rnd.Next(90, 180);
+               animalSpawnTimer -= Time.deltaTime;
 
-               int randomedSpawnPointNumber = rnd.Next(0, animalSpawnPoints.Length);
-               int randomedDestinationNumber = rnd.Next(0, animalSpawnDestinations.Length);
-              
-               GameObject newDeer = Instantiate(Resources.Load("Deer"), animalSpawnPoints[randomedSpawnPointNumber].transform.position, Quaternion.identity) as GameObject;
-               newDeer.GetComponent<AnimalScript>().target = animalSpawnDestinations[randomedDestinationNumber];
-               newDeer.GetComponent<AnimalScript>().agent.SetDestination(animalSpawnDestinations[randomedDestinationNumber].transform.position);
-               newDeer.name = "Deer";
-               newDeer.transform.SetParent(GameObject.Find("Animals").GetComponent<Transform>());
-               Debug.Log("New Deer is spawned.");
-               
+               if (animalSpawnTimer <= 0)
+               {
+                    animalSpawnTimer = rnd.Next(90, 180);
 
+                    int randomedSpawnPointNumber = rnd.Next(0, animalSpawnPoints.Length);
+                    int randomedDestinationNumber = rnd.Next(0, animalSpawnDestinations.Length);
+
+                    GameObject newDeer = Instantiate(Resources.Load("Deer"), animalSpawnPoints[randomedSpawnPointNumber].transform.position, Quaternion.identity) as GameObject;
+                    newDeer.GetComponent<AnimalScript>().target = animalSpawnDestinations[randomedDestinationNumber];
+                    newDeer.GetComponent<AnimalScript>().agent.SetDestination(animalSpawnDestinations[randomedDestinationNumber].transform.position);
+                    newDeer.name = "Deer";
+                    newDeer.transform.SetParent(GameObject.Find("Animals").GetComponent<Transform>());
+                    Debug.Log("New Deer is spawned.");
+               }
           }
      }
-
-
+     
      private void PlaceBuilding()
      {
 
@@ -724,73 +784,7 @@ public class GameMasterScript : MonoBehaviour
                }
           }
      }
-
-     private void PlaceBuildingNear(Vector3 clickPoint)
-     {
-          Vector3 finalPosition = buildingGrid.GetComponent<GridScript>().GetNearestPointOnGrid(clickPoint);
-          Debug.Log("The corrigated point's position is " + finalPosition.ToString());
-
-          GameObject newBuilding = null;
-          if (BuildingTypeDropdown.value == 0 && GlobVars.WOOD >= 30 && GlobVars.STONE >= 10)
-          {
-               newBuilding = Instantiate(Resources.Load("House"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ItemType.WOOD, 30); DecreaseResource(ItemType.STONE, 10);
-               SpawnWorker(finalPosition);
-          }
-          else if (BuildingTypeDropdown.value == 1 && GlobVars.WOOD >= 15 && GlobVars.STONE >= 10)
-          {
-               newBuilding = Instantiate(Resources.Load("Storage"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ItemType.WOOD, 15); DecreaseResource(ItemType.STONE, 10);
-          }
-          else if (BuildingTypeDropdown.value == 2 && GlobVars.WOOD >= 20 && GlobVars.STONE >= 5)
-          {
-               newBuilding = Instantiate(Resources.Load("Granary"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ItemType.WOOD, 20); DecreaseResource(ItemType.STONE, 5);
-          }
-          else if (BuildingTypeDropdown.value == 3 && GlobVars.WOOD >= 10 && GlobVars.STONE >= 5)
-          {
-               newBuilding = Instantiate(Resources.Load("Campfire"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ItemType.WOOD, 10); DecreaseResource(ItemType.STONE, 5);
-          }
-          else if (BuildingTypeDropdown.value == 4 && GlobVars.WOOD >= 15 && GlobVars.FOOD >= 30)
-          {
-               newBuilding = Instantiate(Resources.Load("Farm"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ItemType.WOOD, 5); DecreaseGlobalFood(30);
-          }
-          else if (BuildingTypeDropdown.value == 5 && GlobVars.WOOD >= 50 && GlobVars.FOOD >= 25)
-          {
-               newBuilding = Instantiate(Resources.Load("MillBakery"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ItemType.WOOD, 50); DecreaseResource(ItemType.STONE, 25);
-          }
-          else if (BuildingTypeDropdown.value == 6 && GlobVars.WOOD >= 125 && GlobVars.FOOD >= 50)
-          {
-               newBuilding = Instantiate(Resources.Load("TradingPost"), finalPosition, Quaternion.identity) as GameObject;
-               DecreaseResource(ItemType.WOOD, 125); DecreaseResource(ItemType.STONE, 50);
-          }
-          else
-          {
-               Debug.Log("Not enough resource to build.");
-          }
-          
-          if(newBuilding != null)
-          {
-               GlobVars.RecountStoredItemsToTopUIBar();
-               newBuilding.transform.SetParent(buildingGrid.GetComponent<Transform>());
-               FindAllPlacedStorageBuilding();
-          }
-     }
-
-     private void SetBuildingTypeScrollDownMenuOptions()
-     {
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("House (Wood: 30, Stone: 10)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Storage (Wood: 15, Stone: 10)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Granary (Wood: 20, Stone: 5)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Campfire (Wood: 10, Stone: 5)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Farm (Wood: 5, Food: 30)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Mill and Bakery (Wood: 50, Stone: 25)"));
-          BuildingTypeDropdown.options.Add(new Dropdown.OptionData("Trading Post (Wood: 125, Stone: 50)"));
-     }
-
+     
 
      public void FindAllPlacedStorageBuilding()
      {
@@ -836,7 +830,7 @@ public class GameMasterScript : MonoBehaviour
           }
      }
 
-     private void DecreaseGlobalFood(int decreaseValue) // Iterate trough the inventory to find any kind of food and decrase it by the give value
+     private void DecreaseFood(int decreaseValue) // Iterate trough the inventory to find any kind of food and decrase it by the give value
      {
           int value = decreaseValue;
 
@@ -884,14 +878,13 @@ public class GameMasterScript : MonoBehaviour
                if(GlobVars.FOOD > 0)
                {
                     Debug.Log("Global food decrased by " + GlobVars.POPULATION);
-                    DecreaseGlobalFood(GlobVars.POPULATION);
+                    DecreaseFood(GlobVars.POPULATION);
                }
                
                
           }
      }
      
-
      private void SpawnWorker(Vector3 position)
      {
           GameObject newWorker = Instantiate(Resources.Load("Worker"), position, Quaternion.identity) as GameObject;
@@ -970,25 +963,24 @@ public class GameMasterScript : MonoBehaviour
      private void UpdateIngameTime()
      {
           GlobVars.ingameClock = (int)(ingameClockInFloat += Time.deltaTime);
-          GlobVars.ingameClockInFloat = (float)Math.Round(ingameClockInFloat, 2);
           dateIncreaseTimer -= Time.deltaTime;
           
           if (dateIncreaseTimer <= 0.0f)
           {
                dateIncreaseTimer = dateIncreaseTimerInitial;
-               gameTime = gameTime.AddDays(1);
+               gameDate = gameDate.AddDays(1);
           }
      }
 
      private void UpdateSeason()
      {
-          if (gameTime.Month >= 3 && gameTime.Month < 6) GlobVars.season = Season.SPRING;
-          else if (gameTime.Month >= 6 && gameTime.Month < 9) GlobVars.season = Season.SUMMER;
-          else if (gameTime.Month >= 9 && gameTime.Month < 12) GlobVars.season = Season.AUTUMN;
+          if (gameDate.Month >= 3 && gameDate.Month < 6) GlobVars.season = Season.SPRING;
+          else if (gameDate.Month >= 6 && gameDate.Month < 9) GlobVars.season = Season.SUMMER;
+          else if (gameDate.Month >= 9 && gameDate.Month < 12) GlobVars.season = Season.AUTUMN;
           else GlobVars.season = Season.WINTER;
 
-          if (gameTime.Month == 3 || gameTime.Month == 6 || gameTime.Month == 9 || gameTime.Month == 12){
-               if(gameTime.Day == 1)
+          if (gameDate.Month == 3 || gameDate.Month == 6 || gameDate.Month == 9 || gameDate.Month == 12){
+               if(gameDate.Day == 1)
                {
                     GlobVars.firstDayOfSeason = true;
                }
@@ -999,10 +991,7 @@ public class GameMasterScript : MonoBehaviour
           }
           
      }
-
-
      
-
      private void CameraMovementManagement()
      {
           if (Application.isFocused)
@@ -1068,6 +1057,28 @@ public class GameMasterScript : MonoBehaviour
           {
                showFpsMeter = !showFpsMeter;
           }
+          if (Input.GetKeyDown(KeyCode.H))
+          {
+               GlobVars.ModifyStoredItemQuantity(ItemType.WOOD, 20);
+          } 
+          if (Input.GetKeyDown(KeyCode.J))
+          {
+               GlobVars.ModifyStoredItemQuantity(ItemType.STONE, 20);
+          }
+          if (Input.GetKeyDown(KeyCode.K))
+          {
+               GlobVars.ModifyStoredItemQuantity(ItemType.BERRY, 20);
+          }
+          if (Input.GetKeyDown(KeyCode.L))
+          {
+               GlobVars.GOLD+= 100;
+          }
+          if (Input.GetKeyDown(KeyCode.Escape))
+          {
+               Application.Quit();
+          }
+
+
      }
 
      private void RectangleUnitSelect()
@@ -1136,15 +1147,12 @@ public class GameMasterScript : MonoBehaviour
                }
           }
      }
-
-
-
+     
      private void UpdateTopUIBar()
      {
-          GameDateText.text = "Date: " + gameTime.Year + "." + gameTime.Month + "." + gameTime.Day + " (" + GlobVars.season + ") "; //+ "      Passed Time: " + GlobVars.ingameClock;   " sec ( " + GlobVars.ingameClockInFloat +  " )";
+          GameDateText.text = "Date: " + gameDate.Year + "." + gameDate.Month + "." + gameDate.Day + " (" + GlobVars.season + ") "; //+ "      Passed Time: " + GlobVars.ingameClock;   " sec ( " + GlobVars.ingameClockInFloat +  " )";
           SupplyText.text = "Pop: " + GlobVars.POPULATION + "   Wood: " + GlobVars.WOOD + "   Stone: " + GlobVars.STONE + "   Food: " + GlobVars.FOOD + "   Gold: " + GlobVars.GOLD;
           TownLevelText.text = "Town level " + townLevel;
      }
-
-     
+ 
 }

@@ -79,6 +79,7 @@ ScriptsOnlyBuild:
     - UnityEditor.Graphs.AnimatorControllerTool
     UnityEditor.TestRunner.dll:
     - UnityEditor.TestTools.TestRunner.Api.CallbacksHolder
+    - UnityEditor.TestTools.TestRunner.TestListCacheData
     UnityEngine.UI.dll:
     - UnityEngine.EventSystems.EventSystem
     - UnityEngine.EventSystems.StandaloneInputModule
@@ -300,7 +301,7 @@ ScriptsOnlyBuild:
     className: TMP_Dropdown
   - hash:
       serializedVersion: 2
-      Hash: ff888c1254a38942267ec6fe680ed492
+      Hash: e2645200b29486a4fb7069c00b897d62
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: AnimalScript
@@ -786,7 +787,7 @@ ScriptsOnlyBuild:
     className: FabrikSolver2D
   - hash:
       serializedVersion: 2
-      Hash: 9335d155f1c075433ab78f1b01ab4c6d
+      Hash: c65d8548674fc0084c469ebfd1b83ee4
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GameMasterScript
@@ -864,7 +865,7 @@ ScriptsOnlyBuild:
     className: ProjectileScript
   - hash:
       serializedVersion: 2
-      Hash: c545cb844645c68e47d81b4359ac2bba
+      Hash: e7b2827f1563cfdf2f5d61da67d2804a
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: WorkerScript
@@ -1040,4 +1041,4 @@ ScriptsOnlyBuild:
   scenePathNames:
   - Assets/Scenes/MainScene.unity
   playerPath: C:/Users/Kalman/Documents/Coding Projects/Unity/TownSim Builds/TownSim
-    v0.7/TownSim.exe
+    v0.8/TownSim.exe

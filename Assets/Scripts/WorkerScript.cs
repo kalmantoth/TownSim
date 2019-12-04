@@ -16,8 +16,7 @@ public class WorkerScript : MonoBehaviour
      
 
      // Timer defs
-     public float actionCooldownInitial;
-     public float actionCooldown;
+     public float actionCooldown, actionCooldownInitial;
      public float cooldownModifier;
      private float huntingTimer, huntingTimerInitial;
      private float idleTimer;
@@ -38,10 +37,7 @@ public class WorkerScript : MonoBehaviour
      private Vector3 lastPosition;
      private GameObject ground;
      public float distanceFromTarget;
-
-     private Random rnd;
-     private int randomEventTime;
-
+     
      private ArrayList spritesInitialRenderingOrder;
      private int workerSpriteType;
      private string workerSpritePath;
@@ -56,7 +52,7 @@ public class WorkerScript : MonoBehaviour
 
      private Animator workerAnimator;
 
-
+     private Random rnd;
      public bool workerIsHidden;
      
      // Basic functions
@@ -95,7 +91,6 @@ public class WorkerScript : MonoBehaviour
 
           // Random example code for future features for worker
           rnd = new Random();
-          randomEventTime = rnd.Next(10, 30);
 
 
 
@@ -238,7 +233,6 @@ public class WorkerScript : MonoBehaviour
                          }
                          
                          FarmActivity();
-                         //CookActivity();
                     }
                     // Worker while at the millbakery
                     else if (target.GetComponent<BuildingScript>().buildingType == BuildingType.MILLBAKERY)
@@ -500,9 +494,7 @@ public class WorkerScript : MonoBehaviour
           int collectValue = 1;
 
           ResourceScript resourceTarget = target.GetComponent<ResourceScript>();
-
-
-
+          
           if (actionCooldown <= 0.0f && resourceTarget.ResourceAmountCanBeDecreased(collectValue))
           {
                actionCooldown = actionCooldownInitial * cooldownModifier;

@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.AI;
 using Random = System.Random;
 
-public enum AnimalType { DEER }
 
 public class AnimalScript : MonoBehaviour
 {
@@ -14,19 +13,17 @@ public class AnimalScript : MonoBehaviour
 
 
      public NavMeshAgent agent;
-     public AnimalType animalType;
      public string animalName;
-     public bool isFleeing;
+     
      private float movingSpeed;
      private Vector3 movingVelocity;
      private Vector3 lastPosition;
 
-     public GameObject deerSpriteContainer;
+     public GameObject animalSpriteContainer;
 
+     public bool isFleeing;
      private GameObject animalLeavingPoint;
      
-     private Random rnd;
-
      private ArrayList spritesInitialRenderingOrder;
 
      public GameObject workerTargetPoint;
@@ -44,32 +41,23 @@ public class AnimalScript : MonoBehaviour
           lastPosition = this.transform.position;
 
           //Rotating the Deer's sprite for the NavMeshAgent
-          deerSpriteContainer.GetComponent<Transform>().Rotate(90, 0, 0);
+          animalSpriteContainer.GetComponent<Transform>().Rotate(90, 0, 0);
           
           isFleeing = false;
 
           animalLeavingPoint = GameObject.Find("/AnimalController/AnimalLeavingPoint");
-
-          rnd = new Random();
+          
 
           // Setting initial rendering order of the Worker's sprites
-          spritesInitialRenderingOrder = new ArrayList();
+          /*spritesInitialRenderingOrder = new ArrayList();
           foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer)))
           {
                spritesInitialRenderingOrder.Add(sprite.sortingOrder);
-          }
+          }*/
           ModifyRenderingOrder();
-
-
+          
      }
-
-
-     // Start is called before the first frame update
-     void Start()
-     {
-        
-     }
-
+     
      // Update is called once per frame
      void Update()
      {
@@ -79,7 +67,7 @@ public class AnimalScript : MonoBehaviour
           this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
 
 
-          if (Utils.CalculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
+          if (isFleeing && Utils.CalculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
           {
                Debug.Log("Animal has escaped.");
                Destroy(this.gameObject);
@@ -103,12 +91,12 @@ public class AnimalScript : MonoBehaviour
           if (movingVelocity.x <= 0) // Facing Right
           {
                //Debug.Log("Deer is facing right.");
-               deerSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+               animalSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
           }
           else // Facing Left
           {
                //Debug.Log("Deer is facing left.");
-               deerSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+               animalSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
 
           }
 
@@ -186,7 +174,7 @@ public class AnimalScript : MonoBehaviour
 
      public override string ToString()
      {
-          return animalName + "\n\tanimal type: " + animalType.ToString() + "\n\tis fleeing: " + isFleeing.ToString();
+          return animalName + "\n\tis fleeing: " + isFleeing.ToString();
      }
 
      
