@@ -73,6 +73,7 @@
     <Compile Include="Assets\ExternalSources\Tilemap\Tiles\Rule Tile\Scripts\RuleTile.cs" />
     <Compile Include="Assets\ExternalSources\Tilemap\Tiles\Terrain Tile\Scripts\TerrainTile.cs" />
     <Compile Include="Assets\ExternalSources\Tilemap\Tiles\Weighted Random Tile\WeightedRandomTile.cs" />
+    <Compile Include="Assets\MenuHandlerScript.cs" />
     <Compile Include="Assets\Scripts\AnimalScript.cs" />
     <Compile Include="Assets\Scripts\BuildingScript.cs" />
     <Compile Include="Assets\Scripts\FarmScript.cs" />

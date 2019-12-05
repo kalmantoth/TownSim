@@ -25,13 +25,13 @@ public class GridScript : MonoBehaviour
 
           return result;
      }
-     /*
+     
      private void OnDrawGizmos()
      {
           Gizmos.color = Color.yellow;
-          for (float x = -20; x < 20; x += size*2)
+          for (float x = -50; x < 50; x += size)
           {
-               for (float y = -20; y < 20; y += size*2)
+               for (float y = -50; y < 50; y += size)
                {
                     var point = GetNearestPointOnGrid(new Vector3(x, y, 0f));
                     Gizmos.DrawSphere(point, 0.1f);
@@ -39,5 +39,5 @@ public class GridScript : MonoBehaviour
 
           }
      }
-     */
+     
 }

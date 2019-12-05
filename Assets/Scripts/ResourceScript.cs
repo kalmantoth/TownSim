@@ -27,21 +27,16 @@ public class ResourceScript : MonoBehaviour
      {
           if (userList.Count != 0)
           {
-                    if( currentAmount > 0)
+               if( currentAmount <= 0)
+               {
+                    foreach (GameObject worker in userList)
                     {
+                         worker.GetComponent<WorkerScript>().SetTargetToGround();
+                         RemoveFromResourceUserList(worker);
                     }
-                    else
-                    {
-                         foreach (GameObject worker in userList)
-                         {
-                              worker.GetComponent<WorkerScript>().SetTargetToGround();
-                              RemoveFromResourceUserList(worker);
-                         }
-                         DestroyResourceGameObject();
-                    }
+                    DestroyResourceGameObject();
+               }
           }
-
-
           
      }
 
@@ -57,7 +52,7 @@ public class ResourceScript : MonoBehaviour
 
      public void ModifyRenderingOrder()
      {
-          resourceSpriteRenderer.sortingOrder = -(int)(((this.gameObject.transform.position.y)*100)-25); // The number -50 is because the worker render's correct display
+          resourceSpriteRenderer.sortingOrder = -(int)(((this.gameObject.transform.position.y)*100)-25);
      }
 
      
@@ -183,7 +178,7 @@ public class ResourceScript : MonoBehaviour
 
      public override string ToString()
      {
-          return resourceContainerName + "\n\tresource type: " + itemType.ToString() + "\n\tworker's count: " + userList.Count + "\n\tresource amount: " + currentAmount + "/" + fullAmount;
+          return resourceContainerName + "\n\t Resource type: " + Utils.UppercaseFirst(itemType.ToString()) + "\n\t Worker count: " + userList.Count + "\n\t Resource amount: " + currentAmount + "/" + fullAmount;
      }
 
 }

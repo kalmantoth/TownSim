@@ -28,37 +28,31 @@ public class BuildingScript : MonoBehaviour
 
      private void Awake()
      {
-          
+          ModifyRenderingOrder();
 
           indoorWorkers = new List<GameObject>();
 
           isBuildingInUse = false;
-
-          ModifyRenderingOrder();
-
+          
           workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
           
           
-          
-          // Setting render sorting order by finding gameobject's global position;
-          //     this.gameObject.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(this.gameObject.transform.position.y * 100);
-          
-
           if (buildingType == BuildingType.STORAGE)
           {
-               inventory = new Inventory(500 , InventoryType.RESOURCE);
+               inventory = new Inventory(150 , InventoryType.RESOURCE);
+
           }
 
           if (buildingType == BuildingType.GRANARY)
           {
-               inventory = new Inventory(200 , InventoryType.FOOD);
+               inventory = new Inventory(100 , InventoryType.FOOD);
           }
 
           if (buildingType == BuildingType.TOWNHALL)
           {
                inventory = new Inventory(125, InventoryType.ALL);
-               inventory.ModifyInventory(ItemType.WOOD, 25);
-               inventory.ModifyInventory(ItemType.STONE, 25);
+               inventory.ModifyInventory(ItemType.WOOD, 0);
+               inventory.ModifyInventory(ItemType.STONE, 0);
                inventory.ModifyInventory(ItemType.BERRY, 35);
           }
           
@@ -89,7 +83,6 @@ public class BuildingScript : MonoBehaviour
           {
                ChangeSpriteBySeason();
           }
-               
      }
 
 
@@ -122,8 +115,12 @@ public class BuildingScript : MonoBehaviour
 
      public void RemoveIndoorWorker(GameObject worker)
      {
-          Debug.Log("Worker removed from indoorWorkers list.");
-          indoorWorkers.Remove(worker);
+          
+          if (indoorWorkers.Contains(worker))
+          {
+               Debug.Log("Worker removed from indoorWorkers list.");
+               indoorWorkers.Remove(worker);
+          }
      }
 
      public void RemoveAllIndoorWorkers()
@@ -131,6 +128,7 @@ public class BuildingScript : MonoBehaviour
           foreach (GameObject worker in indoorWorkers)
           {
                WorkerScript ws = worker.GetComponent<WorkerScript>();
+               RemoveIndoorWorker(worker);
                if (ws.workerIsHidden) ws.workerIsHidden = false;
                ws.SetTargetToGround();
           }
@@ -297,7 +295,7 @@ public class BuildingScript : MonoBehaviour
      {
           if(this.GetComponent<ResourceScript>() == null)
           {
-               this.GetComponentInChildren<SpriteRenderer>().sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) - 25); // The number -50 is because the worker render's correct display
+               foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer))) sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) - 25);
           }
           
      }
@@ -314,16 +312,16 @@ public class BuildingScript : MonoBehaviour
 
      public override string ToString()
      {
-          string returnString = buildingName + "\n\tbuilding type: " + buildingType.ToString();
+          string returnString = buildingName + "\n\t Building type: " + Utils.UppercaseFirst(buildingType.ToString());
 
-          if (buildingType == BuildingType.STORAGE || buildingType == BuildingType.GRANARY || buildingType == BuildingType.TOWNHALL) returnString += "\n\tinventory: " + inventory.ToString();
+          if (buildingType == BuildingType.STORAGE || buildingType == BuildingType.GRANARY || buildingType == BuildingType.TOWNHALL) returnString += "\n\t Inventory: " + inventory.ToString();
           else if(buildingType == BuildingType.FARM)
           {
                returnString += "\n\t " + gameObject.GetComponent<FarmScript>().ToString();
           }
           else if (buildingType == BuildingType.CAMPFIRE)
           {
-               returnString += "\n\tselected food type: " + selectedActiveItemType.ToString();
+               returnString += "\n\t Selected food to cook: " + Utils.UppercaseFirst(selectedActiveItemType.ToString());
           }
 
           if (isBuildingInUse)
@@ -331,11 +329,12 @@ public class BuildingScript : MonoBehaviour
                if (buildingType == BuildingType.MILLBAKERY)
                {
                     ItemType doneFood = Utils.SpecifyDonePairOfUndoneFood(selectedActiveItemType);
-                    returnString += "\n\t(worker: (" + selectedActiveItemType + "/" + doneFood + "))\t";
+                    returnString += "\n\t (Worker: (" + selectedActiveItemType + "/" + doneFood + "))\t";
+
                     foreach (GameObject worker in indoorWorkers)
                     {
                          WorkerScript ws = worker.GetComponent<WorkerScript>();
-                         returnString += "\t" + worker.name + ": (" + ws.inventory.GetItemCurrentQuantity(selectedActiveItemType) + "/" + ws.inventory.GetItemCurrentQuantity(doneFood) + "))\t";
+                         returnString += "\tWorker: (" + ws.inventory.GetItemCurrentQuantity(selectedActiveItemType) + "/" + ws.inventory.GetItemCurrentQuantity(doneFood) + "))\t";
                     }
                }
 

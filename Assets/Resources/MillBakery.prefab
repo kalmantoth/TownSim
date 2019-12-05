@@ -68,7 +68,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 6239fe305f96b02439fb1a7c30a21bd4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -132,9 +132,9 @@ MonoBehaviour:
   buildingType: 6
   buildingName: Mill and Bakery
   isBuildingInUse: 0
-  itemGroup: 0
   selectedActiveItemType: 11
   workerTargetPoint: {fileID: 0}
+  indoorWorkers: []
   menuShow: 0
   menuShowPosition: {x: 0, y: 0, z: 0}
 --- !u!208 &3972654689473479649

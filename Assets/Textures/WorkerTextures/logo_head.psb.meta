@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a7be615c7956bf54ca240d0508c561dc
+guid: 5f57dd2cc2babac46933c6d7016b1c3d
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -26,7 +26,7 @@ ScriptedImporter:
     streamingMipmapsPriority: 0
     nPOTScale: 1
     sRGBTexture: 1
-    spriteMode: 1
+    spriteMode: 2
     spriteExtrude: 1
     spriteMeshType: 1
     alignment: 0
@@ -62,18 +62,18 @@ ScriptedImporter:
     compressionQualitySet: 0
     textureFormatSet: 0
   spriteImportData:
-  - name: worker_male_head_03_1
+  - name: 
     originalName: 
-    pivot: {x: 0.5, y: 0.5}
+    pivot: {x: 0, y: 0}
     alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
     rect:
       serializedVersion: 2
       x: 0
       y: 0
-      width: 64
-      height: 64
-    spriteID: 1dc8e6f443d00c145adbba25fc336673
+      width: 0
+      height: 0
+    spriteID: 
     internalID: 0
     spriteBone: []
     spriteOutline: []
@@ -86,7 +86,7 @@ ScriptedImporter:
     uvTransform: {x: 0, y: 0}
   mosaicSpriteImportData: []
   rigSpriteImportData:
-  - name: Head
+  - name: Logo_Head
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -95,9 +95,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 12
-      height: 17
-    spriteID: 285e510aece5b7d41a340020db130457
+      width: 13
+      height: 18
+    spriteID: 0f3ab3c655489b34799a3bb2e28aa9ad
     internalID: 0
     spriteBone: []
     spriteOutline: []
@@ -107,7 +107,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     parentGroupIndex: -1
-    uvTransform: {x: -22, y: -19}
+    uvTransform: {x: -21, y: -19}
   platformSettings:
   - name: Default
     overridden: 1
@@ -130,19 +130,19 @@ ScriptedImporter:
   paperDollMode: 0
   spriteCategoryList:
     categories: []
-  textureActualWidth: 64
-  textureActualHeight: 64
+  textureActualWidth: 32
+  textureActualHeight: 32
   spritePackingTag: 
   resliceFromLayer: 0
   characterMode: 1
   mosaicPSDLayers: []
   rigPSDLayers:
-  - name: Head
-    spriteName: Head
+  - name: Logo_Head
+    spriteName: Logo_Head
     isGroup: 0
     parentIndex: -1
-    spriteID: 285e510aece5b7d41a340020db130457
-    layerID: 2
+    spriteID: 0f3ab3c655489b34799a3bb2e28aa9ad
+    layerID: 20
     mosaicPosition: {x: 4, y: 4}
   characterData:
     bones: []
@@ -151,6 +151,6 @@ ScriptedImporter:
     characterGroups: []
   boneGOs: []
   generateGOHierarchy: 1
-  textureAssetName: worker_male_head_03
-  prefabAssetName: worker_male_head_03_GO
+  textureAssetName: logo_head
+  prefabAssetName: logo_head_GO
   spriteLibAssetName: 

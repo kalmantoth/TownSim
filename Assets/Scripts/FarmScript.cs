@@ -113,7 +113,7 @@ public class FarmScript : MonoBehaviour
      {
           if(farmType == FarmType.NOTHING)
           {
-               // Doin sweet nothing :D
+               // Doin' sweet nothing :D
           }
           else if(farmType != FarmType.NOTHING && stage == 0)
           {
@@ -124,50 +124,7 @@ public class FarmScript : MonoBehaviour
                this.gameObject.GetComponentInChildren<SpriteRenderer>().sprite = Resources.Load<Sprite>("Buildings/farm_" + farmType.ToString().ToLower() + "_stage_" + stage);
           }
      }
-     
-     /*
 
-     private void OnGUI()
-     {
-          if (menuShow && Input.GetMouseButton(1))
-          {
-               if (farmType == FarmType.NOTHING && GlobVars.season != Season.WINTER)
-               {
-                    GUIStyle customStyle = new GUIStyle(GUI.skin.GetStyle("label")); // Menu style
-                    customStyle.fontSize = 18;
-                    customStyle.normal.textColor = Color.white;
-
-                    Utils.DrawScreenRect(new Rect(menuShowPosition.x, menuShowPosition.y - 30, 100f, 120f), Color.gray); // Background to the menu
-                    GUI.Label(new Rect(menuShowPosition.x + 10, menuShowPosition.y - 30, 100f, 30f), "Plant type", customStyle); // Menu label 
-                    if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y, 100f, 30f), "Potato"))    // Options for the menu
-                    {
-                         Debug.Log("Clicked on POTATO button.");
-                         farmType = FarmType.POTATO;
-                         farmIsReadyToGrowPlants = true;
-                         menuShow = false;
-                    }
-                    else if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y + 30, 100f, 30f), "Wheat"))
-                    {
-                         Debug.Log("Clicked on WHEAT button.");
-                         farmType = FarmType.WHEAT;
-                         farmIsReadyToGrowPlants = true;
-                         menuShow = false;
-                    }
-                    else if (GUI.Button(new Rect(menuShowPosition.x, menuShowPosition.y + 60, 100f, 30f), "Nothing"))
-                    {
-                         Debug.Log("Clicked on NOTHING button.");
-                         farmType = FarmType.NOTHING;
-                         farmIsReadyToGrowPlants = false;
-                         menuShow = false;
-                    }
-               }
-          }
-          else
-          {
-               menuShow = false;
-          }
-     }
-     */
      public void IsThereWinterSeason()
      {
           if(GlobVars.season == Season.WINTER)
@@ -191,25 +148,16 @@ public class FarmScript : MonoBehaviour
      public override string ToString()
      {
           string returnString = "";
-          returnString = "farm type: " + farmType.ToString() + "\n\t stage: " + stage + "\n\t ready to grow plants: " + farmIsReadyToGrowPlants.ToString() + "\n\t ready to harvest: " + farmIsReadyToHarvest.ToString() + "\n\t growing in progress: " + plantGrowingInProgress.ToString();
+          returnString = "Farm type: " + Utils.UppercaseFirst(farmType.ToString()) + "\n\t Stage: " + stage + "\n\t Ready to grow plants: " + farmIsReadyToGrowPlants.ToString() + "\n\t Ready to harvest: " + farmIsReadyToHarvest.ToString() + "\n\t Growing in progress: " + plantGrowingInProgress.ToString();
 
           if (farmIsReadyToHarvest == true)
           {
-               returnString += "\n\t resource quantity: " + this.gameObject.GetComponent<ResourceScript>().currentAmount + "/" + GetComponent<ResourceScript>().fullAmount;
+               returnString += "\n\t Resource quantity: " + this.gameObject.GetComponent<ResourceScript>().currentAmount + "/" + GetComponent<ResourceScript>().fullAmount;
           }
 
           return returnString;
-          /*
-           *public bool farmIsReadyToGrowPlants;
-     public bool farmIsReadyToHarvest;
-     public bool plantGrowingInProgress;
-
-           */
      }
-     //public void change
-
-
-
+     
 }
 
 

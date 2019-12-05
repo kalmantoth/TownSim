@@ -57,11 +57,7 @@ public class TradeScript : MonoBehaviour
                tradeItemValue.tradeItemValueModification = 0;
                tradeItemValues.Add(tradeItemValue);
           }
-
-          Debug.Log("After INIT");
-          Debug.Log("GlobVars.GetStoredItems(): " + GlobVars.GetStoredItems().Length);
-          Debug.Log("tradeItems.Count: " + tradeItems.Count);
-          Debug.Log("Trade panel rows have been initalized...");
+          
           UpdateTradePanel();
 
      }
@@ -86,7 +82,6 @@ public class TradeScript : MonoBehaviour
           
           if (!tradeItemsUpToDate)
           {
-               Debug.Log("Trade panel items have been updated...");
                UpdateTradePanel();
           }
               
@@ -144,15 +139,13 @@ public class TradeScript : MonoBehaviour
 
           tradeGoldSum = goldSum;
           TotalGoldSumValueText.text = goldSum.ToString();
-
-          Debug.Log("GlobVars.GOLD + tradeGoldSum: " + (GlobVars.GOLD - tradeGoldSum));
+          
           if ((GlobVars.GOLD + tradeGoldSum) < 0) AcceptTradeButton.interactable = false;
           else AcceptTradeButton.interactable = true;
      }
 
      public void UpdateTradePanel()
      {
-          Debug.Log("Trade panel rows are refreshed...");
           RemoveTradeItemRows();
           AddTradeItemRow();
           RefreshTradeGoldSum();

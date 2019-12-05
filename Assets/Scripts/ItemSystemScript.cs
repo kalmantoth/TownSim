@@ -162,7 +162,7 @@ public class Item
      
      public override string ToString()
      {
-          return itemType.ToString() + " (" + currentQuantity + "/" + maxQuantity + ")";
+          return Utils.UppercaseFirst(itemType.ToString()) + " (" + currentQuantity + "/" + maxQuantity + ")";
      }
      
      public string ToStringAllStat()
@@ -209,9 +209,6 @@ public class Inventory
      {
           this.inventoryType = inventoryType;
           
-          // Szval ha az adott inventory típuson
-
-
           if(inventoryType == InventoryType.FOOD)
           {
                for (int i = 0; i < itemTypeEnumValues.Length; i++)
@@ -224,7 +221,7 @@ public class Inventory
                               items[i] = new Item(defItem.itemType, maxItemQuantity, defItem.itemName);
                               Debug.Log("Granary is initalized with item: " + items[i].itemName + " quantity: " + items[i].currentQuantity + " / " + items[i].maxQuantity);
                          }
-                         else items[i] = new Item(itemTypeEnumValues[i], 0);
+                         else if (items[i] == null) items[i] = new Item(itemTypeEnumValues[i], 0, 0);
                     }
                }
           }
@@ -240,9 +237,13 @@ public class Inventory
                               items[i] = new Item(defItem.itemType, maxItemQuantity, defItem.itemName);
                               Debug.Log("Storage is initalized with item: " + items[i].itemName + " quantity: " + items[i].currentQuantity + " / " + items[i].maxQuantity);
                          }
-                         else items[i] = new Item(itemTypeEnumValues[i], 0);
+                         else if(items[i] == null) items[i] = new Item(itemTypeEnumValues[i], 0, 0);
                     }
+               }
 
+               foreach (Item i in items)
+               {
+                    Debug.Log(i.ToString());
                }
           }
           else if(inventoryType == InventoryType.ALL)
@@ -371,8 +372,7 @@ public class Inventory
           
      }
      
-    
-     public void TransferFullItemStackToInventory(Inventory otherInventory, InventoryType otherInventoryType) // Transfer full items from the main inventory to the other     
+     public void TransferFullItemStackToInventory(Inventory otherInventory) // Transfer full items from the main inventory to the other     
      {
           for (int i = 0; i < itemTypeEnumValues.Length; i++) 
           {
@@ -391,6 +391,8 @@ public class Inventory
 
      public override string ToString()
      {
+
+          
           string returnString = "";
           foreach (Item item in items)
           {
@@ -399,9 +401,12 @@ public class Inventory
                     returnString += item.ToString() + "   ";
                }
           }
+
+          if(returnString.Equals("")) returnString = "Empty";
+
           return returnString;
      }
-     
+
 
 }
 

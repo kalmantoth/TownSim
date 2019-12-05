@@ -36,7 +36,7 @@ public class AnimalScript : MonoBehaviour
           movingVelocity = new Vector3();
 
           workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
-
+          
           movingVelocity = (transform.position - lastPosition) / Time.deltaTime;
           lastPosition = this.transform.position;
 
@@ -47,13 +47,6 @@ public class AnimalScript : MonoBehaviour
 
           animalLeavingPoint = GameObject.Find("/AnimalController/AnimalLeavingPoint");
           
-
-          // Setting initial rendering order of the Worker's sprites
-          /*spritesInitialRenderingOrder = new ArrayList();
-          foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer)))
-          {
-               spritesInitialRenderingOrder.Add(sprite.sortingOrder);
-          }*/
           ModifyRenderingOrder();
           
      }
@@ -61,6 +54,7 @@ public class AnimalScript : MonoBehaviour
      // Update is called once per frame
      void Update()
      {
+          movingSpeed = 0;
           movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
           lastPosition = transform.position;
 
@@ -174,7 +168,7 @@ public class AnimalScript : MonoBehaviour
 
      public override string ToString()
      {
-          return animalName + "\n\tis fleeing: " + isFleeing.ToString();
+          return animalName + "\n\t Is fleeing: " + isFleeing.ToString();
      }
 
      

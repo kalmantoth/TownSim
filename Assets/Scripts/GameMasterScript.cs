@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using Random = System.Random;
+using UnityEngine.SceneManagement;
 
 public enum Season { SPRING, SUMMER, AUTUMN, WINTER }
 
@@ -190,20 +191,41 @@ public static class Utils
           else return true;
      }
 
+     public static string UppercaseFirst(string str)
+     {
+          if (string.IsNullOrEmpty(str))
+               return string.Empty;
+          return char.ToUpper(str[0]) + str.Substring(1).ToLower();
+     }
 }
 
 public static class GlobVars
 {
-     public static int POPULATION = 0, WOOD = 0, STONE = 0 , FOOD = 0, GOLD = 0, RAW_FOOD = 0;
+     public static int POPULATION = -1, WOOD = -1, STONE = -1, FOOD = -1, RAW_FOOD = -1, GOLD = 0 ;
      public static GameObject infoPanelGameObject = null;
      public static int ingameClock = 0;
      public static Season season = Season.SUMMER;
      public static bool firstDayOfSeason;
      private static List<GameObject> workers = new List<GameObject>();
      private static List<GameObject> selectedWorkers = new List<GameObject>();
-     private static List<GameObject> storageBuildings = new List<GameObject>(); // should change it to private WIP
+     private static List<GameObject> storageBuildings = new List<GameObject>(); 
      private static List<Item> unlockedItems = new List<Item>();
      private static List<Item> storedItems = new List<Item>();
+
+     public static void InitGlobVars()
+     {
+          POPULATION =  WOOD = STONE = FOOD = RAW_FOOD = -1;
+          GOLD = 0;
+          infoPanelGameObject = null;
+          ingameClock = 0;
+          season = Season.SUMMER;
+          firstDayOfSeason = true;
+          workers = new List<GameObject>();
+          selectedWorkers = new List<GameObject>();
+          storageBuildings = new List<GameObject>(); 
+          unlockedItems = new List<Item>();
+          storedItems = new List<Item>();
+     }
 
      public static GameObject[] GetStorageBuildings()
      {
@@ -234,8 +256,7 @@ public static class GlobVars
           }
           
      }
-
-
+     
      public static void RecountStoredItems()
      {
           foreach(Item item in storedItems)
@@ -283,7 +304,6 @@ public static class GlobVars
      public static void AddUnlockedItem(Item item)
      {
           unlockedItems.Add(item);
-          //Debug.Log(item.itemName + " has been unlocked...");
      }
 
      public static Item[] GetUnlockedItems()
@@ -341,7 +361,7 @@ public static class GlobVars
 
      public static void ModifyStoredItemQuantity(ItemType itemType, int modValue)
      {
-          int value = modValue; // vigyázni mert decraseről állítom simára tehát + - konverzióra figyelni kell
+          int value = modValue; 
 
           foreach (GameObject building in storageBuildings)
           {
@@ -371,7 +391,7 @@ public static class GlobVars
           }
      }
 
-     public static void RecountStoredItemsToTopUIBar() // Should rework this accord to the new RecountStoredItems() WIP TODO
+     public static void RecountStoredItemsToTopUIBar() 
      {
           int wood, stone, food, rawFood;
           wood = stone = food = rawFood = 0;
@@ -575,7 +595,7 @@ public class GameMasterScript : MonoBehaviour
                GUIStyle style = new GUIStyle();
                Rect rect = new Rect(0, 0, w, h * 2 / 100);
                style.alignment = TextAnchor.UpperLeft;
-               style.fontSize = h * 2 / 100;
+               style.fontSize = h * 2 / 100 /2;
                style.normal.textColor = new Color(0.0f, 0.0f, 0.5f, 1.0f);
                float msec = deltaTimeFpsMeter * 1000.0f;
                float fps = 1.0f / deltaTimeFpsMeter;
@@ -641,7 +661,6 @@ public class GameMasterScript : MonoBehaviour
      private void PlaceBuildingNear(Vector3 clickPoint)
      {
           Vector3 finalPosition = buildingGrid.GetComponent<GridScript>().GetNearestPointOnGrid(clickPoint);
-          Debug.Log("The corrigated point's position is " + finalPosition.ToString());
 
           GameObject newBuilding = null;
           if (BuildingTypeDropdown.value == 0 && GlobVars.WOOD >= 30 && GlobVars.STONE >= 10)
@@ -777,15 +796,16 @@ public class GameMasterScript : MonoBehaviour
                RaycastHit hitInfo = new RaycastHit();
                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                
-               if (Physics.Raycast(ray, out hitInfo) && hitInfo.transform.tag != "Object")
+               if (Physics.Raycast(ray, out hitInfo) && hitInfo.transform.tag != "Object" && hitInfo.transform.tag != "WaterBlock")
                {
-                    Debug.Log("The given point's position is " + hitInfo.point.ToString());
-                    PlaceBuildingNear(hitInfo.point);
+                    Vector3 correctedPositionByGrid = buildingGrid.GetComponent<GridScript>().GetNearestPointOnGrid(hitInfo.point);
+                    correctedPositionByGrid.z -= 1f;
+                    if (Physics.SphereCast(correctedPositionByGrid, 1f, Vector3.forward, out hitInfo) && hitInfo.transform.tag != "Object" && hitInfo.transform.tag != "WaterBlock")
+                         PlaceBuildingNear(correctedPositionByGrid);
                }
           }
      }
      
-
      public void FindAllPlacedStorageBuilding()
      {
           // Itarate trought the Buildings gameobject's children and add it to the building list
@@ -880,17 +900,21 @@ public class GameMasterScript : MonoBehaviour
                     Debug.Log("Global food decrased by " + GlobVars.POPULATION);
                     DecreaseFood(GlobVars.POPULATION);
                }
-               
-               
+          }
+
+          if (GlobVars.FOOD == 0)
+          {
+               SceneManager.LoadScene("GameOverMenu", LoadSceneMode.Single);
           }
      }
      
      private void SpawnWorker(Vector3 position)
      {
-          GameObject newWorker = Instantiate(Resources.Load("Worker"), position, Quaternion.identity) as GameObject;
+          Vector3 pos = position;
+          pos.y -= 5;
+          GameObject newWorker = Instantiate(Resources.Load("Worker"), pos, Quaternion.identity) as GameObject;
           newWorker.name = "Worker";
           newWorker.transform.SetParent(GameObject.Find("Workers").GetComponent<Transform>());
-          //Debug.Log("New Worker is spawned.");
      }
 
      private void ManageWorkers()
@@ -919,14 +943,8 @@ public class GameMasterScript : MonoBehaviour
                          }
                     }
 
-                    if (GlobVars.FOOD == 0)
-                    {
-                         worker.GetComponent<WorkerScript>().SetCooldownModifier(1.75f);
-                    }
-                    else
-                    {
-                         worker.GetComponent<WorkerScript>().SetCooldownModifier(1f);
-                    }
+                    // if (GlobVars.FOOD == 0) worker.GetComponent<WorkerScript>().SetCooldownModifier(1.75f);
+                    // else worker.GetComponent<WorkerScript>().SetCooldownModifier(1f);
                }
           }
 
@@ -1057,30 +1075,42 @@ public class GameMasterScript : MonoBehaviour
           {
                showFpsMeter = !showFpsMeter;
           }
-          if (Input.GetKeyDown(KeyCode.H))
-          {
-               GlobVars.ModifyStoredItemQuantity(ItemType.WOOD, 20);
-          } 
-          if (Input.GetKeyDown(KeyCode.J))
-          {
-               GlobVars.ModifyStoredItemQuantity(ItemType.STONE, 20);
-          }
-          if (Input.GetKeyDown(KeyCode.K))
-          {
-               GlobVars.ModifyStoredItemQuantity(ItemType.BERRY, 20);
-          }
-          if (Input.GetKeyDown(KeyCode.L))
-          {
-               GlobVars.GOLD+= 100;
-          }
+
           if (Input.GetKeyDown(KeyCode.Escape))
           {
-               Application.Quit();
+               if (!SceneManager.GetSceneByName("PauseMenu").isLoaded)
+               {
+                    SceneManager.LoadScene("PauseMenu", LoadSceneMode.Additive);
+               }
           }
 
+          //   Cheat shortcuts
 
+          if(Input.GetKey(KeyCode.LeftShift) && Input.GetKey(KeyCode.LeftControl))
+          {
+               if (Input.GetKeyDown(KeyCode.G))
+               {
+                    if (townLevel < 5) LevelUpTown();
+               }
+               if (Input.GetKeyDown(KeyCode.H))
+               {
+                    GlobVars.ModifyStoredItemQuantity(ItemType.WOOD, 20);
+               }
+               if (Input.GetKeyDown(KeyCode.J))
+               {
+                    GlobVars.ModifyStoredItemQuantity(ItemType.STONE, 20);
+               }
+               if (Input.GetKeyDown(KeyCode.K))
+               {
+                    GlobVars.ModifyStoredItemQuantity(ItemType.BERRY, 20);
+               }
+               if (Input.GetKeyDown(KeyCode.L))
+               {
+                    GlobVars.GOLD += 100;
+               }
+          }
      }
-
+     
      private void RectangleUnitSelect()
      {
           
@@ -1142,7 +1172,7 @@ public class GameMasterScript : MonoBehaviour
                          InfoPanelTargetDataText.text = GlobVars.infoPanelGameObject.GetComponent<BuildingScript>().ToString();
                          break;
                     default:
-                         InfoPanelTargetDataText.text = "No information is given.";
+                         InfoPanelTargetDataText.text = "Nothing selected";
                          break;
                }
           }
@@ -1150,8 +1180,8 @@ public class GameMasterScript : MonoBehaviour
      
      private void UpdateTopUIBar()
      {
-          GameDateText.text = "Date: " + gameDate.Year + "." + gameDate.Month + "." + gameDate.Day + " (" + GlobVars.season + ") "; //+ "      Passed Time: " + GlobVars.ingameClock;   " sec ( " + GlobVars.ingameClockInFloat +  " )";
-          SupplyText.text = "Pop: " + GlobVars.POPULATION + "   Wood: " + GlobVars.WOOD + "   Stone: " + GlobVars.STONE + "   Food: " + GlobVars.FOOD + "   Gold: " + GlobVars.GOLD;
+          GameDateText.text = "Date: " + gameDate.Year + "." + gameDate.Month + "." + gameDate.Day + " (" + GlobVars.season.ToString().ToLower() + ") ";
+          SupplyText.text = "Population: " + GlobVars.POPULATION + "   Wood: " + GlobVars.WOOD + "   Stone: " + GlobVars.STONE + "   Food: " + GlobVars.FOOD + "   Gold: " + GlobVars.GOLD;
           TownLevelText.text = "Town level " + townLevel;
      }
  

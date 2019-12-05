@@ -86,12 +86,11 @@ public class WorkerScript : MonoBehaviour
 
           //Rotating the SpriteContainer GO for the NavMeshAgent
           this.transform.Find("SpriteContainer").GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+          
 
-          Debug.Log("New Worker spawned.");
-
-          // Random example code for future features for worker
-          rnd = new Random();
-
+          // Randomizing the worker's sprite
+          rnd = new Random(System.Guid.NewGuid().GetHashCode());
+          ChangeWorkerSprite(workerSpriteType);
 
 
           // Setting initial rendering order of the Worker's sprites
@@ -99,14 +98,8 @@ public class WorkerScript : MonoBehaviour
 
           weaponFired = false;
           successHunt = huntingIsInProccess = false;
-
-          workerSpriteType = rnd.Next(1, 3);
-          Debug.Log("worker type number: " + workerSpriteType);
-
-          ChangeWorkerSprite(workerSpriteType);
-
+          
           inventory = new Inventory(10 , InventoryType.ALL);
-          inventory.ModifyInventory(ItemType.BERRY, 0);
 
           selector = this.transform.Find("SpriteContainer/selector").gameObject;
 
@@ -123,6 +116,7 @@ public class WorkerScript : MonoBehaviour
      {
           actionCooldown -= Time.deltaTime;
 
+          movingSpeed = 0;
           movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
           movingVelocity = (transform.position - lastPosition) / Time.deltaTime;
           lastPosition = transform.position;
@@ -137,7 +131,6 @@ public class WorkerScript : MonoBehaviour
 
           HandleActivities();
           LongIdleCheck();
-          // if (GlobVars.ingameClockInFloat % 0.25f == 0)
 
      }
      
@@ -185,14 +178,13 @@ public class WorkerScript : MonoBehaviour
                          }
                          else
                          {
-                              this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
+                              this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory);
                          }
 
                          agent.SetDestination(this.gameObject.transform.position); // Stopping the worker agent movement.
                          Debug.Log("Going back to " + savedTarget.gameObject.name);
                          SetTarget(savedTarget);
                          savedTarget = null;
-                         //nem megy vissza dógozni
 
                     }
                     // Worker load the wanted food type and goes back to the active building
@@ -210,7 +202,7 @@ public class WorkerScript : MonoBehaviour
                     else if (target.GetComponent<BuildingScript>().buildingType == BuildingType.STORAGE || target.GetComponent<BuildingScript>().buildingType == BuildingType.GRANARY || target.GetComponent<BuildingScript>().buildingType == BuildingType.TOWNHALL)
                     {
                          Debug.Log("Unloaded all the items to following building's inventory: " + target.gameObject.name);
-                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory, target.GetComponent<BuildingScript>().inventory.inventoryType);
+                         this.inventory.TransferFullItemStackToInventory(target.GetComponent<BuildingScript>().inventory);
                          SetTargetToGround();
                     }
                     // Worker while cooking at campfire
@@ -401,6 +393,7 @@ public class WorkerScript : MonoBehaviour
 
                if (inventory.IsItemTypeFull(doneFood))
                {
+                    target.GetComponent<BuildingScript>().RemoveIndoorWorker(this.gameObject);
                     UnloadInventory(doneFood);
                }
 
@@ -747,13 +740,15 @@ public class WorkerScript : MonoBehaviour
 
      public void ChangeWorkerSprite(int typeNumber)
      {
-          // Changing the workers sprite from the gotten type number WIP 
-          Debug.Log(this.transform.Find(workerSpritePath).transform.Find("Head").ToString());
-          if (typeNumber == 2)
-          {
-               this.transform.Find(workerSpritePath).transform.Find("Head").GetComponent<SpriteResolver>().SetCategoryAndLabel("Head", "Head2");
-               this.transform.Find(workerSpritePath).transform.Find("Chest").GetComponent<SpriteResolver>().SetCategoryAndLabel("Chest", "Chest2");
-          }
+          workerSpriteType = rnd.Next(1, 9);
+          Debug.Log("New worker spawnned with skin type number: " + workerSpriteType);
+
+          this.transform.Find(workerSpritePath).transform.Find("Head").GetComponent<SpriteResolver>().SetCategoryAndLabel("Head", "Head" + workerSpriteType.ToString());
+          this.transform.Find(workerSpritePath).transform.Find("Chest").GetComponent<SpriteResolver>().SetCategoryAndLabel("Chest", "Chest" + workerSpriteType.ToString());
+          this.transform.Find(workerSpritePath).transform.Find("LeftArm").GetComponent<SpriteResolver>().SetCategoryAndLabel("Left Arm", "LeftArm" + workerSpriteType.ToString());
+          this.transform.Find(workerSpritePath).transform.Find("RightArm").GetComponent<SpriteResolver>().SetCategoryAndLabel("Right Arm", "RightArm" + workerSpriteType.ToString());
+          this.transform.Find(workerSpritePath).transform.Find("LeftLeg").GetComponent<SpriteResolver>().SetCategoryAndLabel("Left Leg", "LeftLeg" + workerSpriteType.ToString());
+          this.transform.Find(workerSpritePath).transform.Find("RightLeg").GetComponent<SpriteResolver>().SetCategoryAndLabel("Right Leg", "RightLeg" + workerSpriteType.ToString());
      }
 
      public void ModifyRenderingOrder()
@@ -847,25 +842,27 @@ public class WorkerScript : MonoBehaviour
      public override string ToString()
      {
 
-          string workerString = "Worker" + "\n\t is selected: " + unitIsSelected.ToString() + "\n\t status: " + workerStatus.ToString() + "\n\t inventory: " + inventory.ToString();
+          string workerString = "Worker" + "\n\t Status: " + Utils.UppercaseFirst(workerStatus.ToString());
 
           if(targetLayer.Equals("Ground")) {
-               workerString += "\n\t target: None";
+               workerString += "\n\t Target: None";
           }
           else
           {
-               workerString += "\n\t target: " + this.target.name;
+               string targetName = "";
+               if (target.GetComponent<BuildingScript>() != null) targetName = target.GetComponent<BuildingScript>().buildingName;
+               else if (target.GetComponent<AnimalScript>() != null) targetName = target.GetComponent<AnimalScript>().animalName;
+               else if (target.GetComponent<ResourceScript>() != null) targetName = target.GetComponent<ResourceScript>().resourceContainerName;
+               else targetName = "None";
+               
+               workerString += "\n\t Target: " + targetName;
           }
+
+          workerString += "\n\t Inventory: " + inventory.ToString();
 
           return workerString;
           
      }
-
-     // ---------------- //
-     // ---------------- //
-     // ---------------- //
-
-     // Assist functions
-
+     
      
 }

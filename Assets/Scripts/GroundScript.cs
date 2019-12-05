@@ -4,18 +4,6 @@ using UnityEngine;
 
 public class GroundScript : MonoBehaviour
 {
-     // Start is called before the first frame update
-     void Start()
-     {
-        
-     }
-
-     // Update is called once per frame
-     void Update()
-     {
-        
-     }
-
      public void OnMouseDown()
      {
           GlobVars.UnselectWorkers();
@@ -25,7 +13,7 @@ public class GroundScript : MonoBehaviour
 
      public override string ToString()
      {
-          return "Just grass Pal! Nothing else to see.";
+          return "Fertile ground";
      }
      
 }
