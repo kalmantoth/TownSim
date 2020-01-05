@@ -60,8 +60,6 @@ public class ResourceScript : MonoBehaviour
 
      public void ChangeSpriteBySeason()
      {
-          
-
           string seasonResourcePath = "seasons/" + GlobVars.season.ToString().ToLower() + "/";
           string resource = "";
 
@@ -85,8 +83,6 @@ public class ResourceScript : MonoBehaviour
           {
                resourceSpriteRenderer.sprite = Resources.Load<Sprite>(seasonResourcePath + resource);
           }
-               
-
      }
      
 

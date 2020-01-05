@@ -896,16 +896,11 @@ public class GameMasterScript : MonoBehaviour
                foodConsumptionTimer = foodConsumptionTimerInitial;
 
                if(GlobVars.FOOD > 0)
-               {
-                    Debug.Log("Global food decrased by " + GlobVars.POPULATION);
                     DecreaseFood(GlobVars.POPULATION);
-               }
           }
 
           if (GlobVars.FOOD == 0)
-          {
                SceneManager.LoadScene("GameOverMenu", LoadSceneMode.Single);
-          }
      }
      
      private void SpawnWorker(Vector3 position)
@@ -1025,8 +1020,6 @@ public class GameMasterScript : MonoBehaviour
                     camMovingSpeed *= 2;
                     camZoomSpeed *= 2;
                }
-
-
 
                if ((Input.mousePosition.x > Screen.width - mouseMovingScreenBoundary && Input.mousePosition.x < Screen.width + mouseMovingScreenBoundary) || Input.GetKey(KeyCode.D))
                {
@@ -1180,7 +1173,7 @@ public class GameMasterScript : MonoBehaviour
      
      private void UpdateTopUIBar()
      {
-          GameDateText.text = "Date: " + gameDate.Year + "." + gameDate.Month + "." + gameDate.Day + " (" + GlobVars.season.ToString().ToLower() + ") ";
+          GameDateText.text = "Date: " + gameDate.Year + "." + gameDate.Month + "." + gameDate.Day + " (" + Utils.UppercaseFirst(GlobVars.season.ToString()) + ") ";
           SupplyText.text = "Population: " + GlobVars.POPULATION + "   Wood: " + GlobVars.WOOD + "   Stone: " + GlobVars.STONE + "   Food: " + GlobVars.FOOD + "   Gold: " + GlobVars.GOLD;
           TownLevelText.text = "Town level " + townLevel;
      }

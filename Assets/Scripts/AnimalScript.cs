@@ -84,12 +84,10 @@ public class AnimalScript : MonoBehaviour
 
           if (movingVelocity.x <= 0) // Facing Right
           {
-               //Debug.Log("Deer is facing right.");
                animalSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
           }
           else // Facing Left
           {
-               //Debug.Log("Deer is facing left.");
                animalSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
 
           }
@@ -138,7 +136,6 @@ public class AnimalScript : MonoBehaviour
                foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer), true))
                {
                     spritesInitialRenderingOrder.Add(sprite.sortingOrder);
-                    //Debug.Log("Init sprite name in list:" + sprite.gameObject.ToString());
                }
           }
 

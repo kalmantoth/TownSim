@@ -17,7 +17,7 @@ public class GridScript : MonoBehaviour
           int zCount = Mathf.RoundToInt(position.z / size);
 
           Vector3 result = new Vector3(
-              (float)(xCount) * size,   // + 0.5f is becouse tilemap grid layout corrigation
+              (float)(xCount) * size,
               (float)(yCount) * size,
               (float)zCount * size);
 
