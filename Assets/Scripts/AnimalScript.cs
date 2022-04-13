@@ -4,41 +4,64 @@ using UnityEngine;
 using UnityEngine.AI;
 using Random = System.Random;
 
+
 public class AnimalScript : MonoBehaviour
 {
 
+     // Target def
+     public GameObject target;
+
+
      public NavMeshAgent agent;
-     public AnimalType animalType;
      public string animalName;
-     public bool isFleeing;
      
+     private float movingSpeed;
+     private Vector3 movingVelocity;
+     private Vector3 lastPosition;
+
+     public GameObject animalSpriteContainer;
+
+     public bool isFleeing;
      private GameObject animalLeavingPoint;
      
-     private Random rnd;
+     private ArrayList spritesInitialRenderingOrder;
+
+     public GameObject workerTargetPoint;
+
+
 
      private void Awake()
      {
-          //Rotating the Worker's sprite for the NavMeshAgent
-          transform.Find("Sprite").GetComponent<Transform>().Rotate(90, 0, 0);
+
+          movingVelocity = new Vector3();
+
+          workerTargetPoint = Utils.SetWorkerTargetPoint(this.gameObject);
+          
+          movingVelocity = (transform.position - lastPosition) / Time.deltaTime;
+          lastPosition = this.transform.position;
+
+          //Rotating the Deer's sprite for the NavMeshAgent
+          animalSpriteContainer.GetComponent<Transform>().Rotate(90, 0, 0);
           
           isFleeing = false;
 
-          animalLeavingPoint = GameObject.Find("AnimalLeavingPoint");
-
-          rnd = new Random();
+          animalLeavingPoint = GameObject.Find("/AnimalController/AnimalLeavingPoint");
+          
+          ModifyRenderingOrder();
+          
      }
-
-
-     // Start is called before the first frame update
-     void Start()
-     {
-        
-     }
-
+     
      // Update is called once per frame
      void Update()
      {
-          if (calculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
+          movingSpeed = 0;
+          movingSpeed = Mathf.Lerp(movingSpeed, (transform.position - lastPosition).magnitude / Time.deltaTime, 0.75f);
+          lastPosition = transform.position;
+
+          this.GetComponent<Animator>().SetFloat("Speed", movingSpeed);
+
+
+          if (isFleeing && Utils.CalculateDistance(animalLeavingPoint.gameObject, this.gameObject) <= 2)
           {
                Debug.Log("Animal has escaped.");
                Destroy(this.gameObject);
@@ -47,7 +70,31 @@ public class AnimalScript : MonoBehaviour
           
      }
 
-     public GameObject createAnimalCarcass()
+     private void LateUpdate()
+     {
+          CheckFacingSide();
+          ModifyRenderingOrder();
+     }
+
+     public void CheckFacingSide()
+     {
+
+          Vector3 pointToFace = new Vector3();
+          pointToFace = target.transform.position;
+
+          if (movingVelocity.x <= 0) // Facing Right
+          {
+               animalSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(90.0f, 0.0f, 0.0f);
+          }
+          else // Facing Left
+          {
+               animalSpriteContainer.GetComponent<Transform>().localEulerAngles = new Vector3(270.0f, -180.0f, 0.0f);
+
+          }
+
+     }
+
+     public GameObject CreateAnimalCarcass()
      {
 
           GameObject deerCarcass = Instantiate(Resources.Load("DeerCarcass"), this.transform.position, Quaternion.identity) as GameObject;
@@ -60,38 +107,54 @@ public class AnimalScript : MonoBehaviour
           return deerCarcass;
      }
      
-     public void stopMovement()
+     public void StopMovement()
      {
           agent.SetDestination(this.gameObject.transform.position);
      }
 
-     public GameObject engageAnimal()
+     public GameObject SuccessHunt(bool successOfHunting)
      {
           
-
-          int roll = rnd.Next(0, 101);
-
-          Debug.Log("Animal has been engaged.");
-          Debug.Log("Hunter rolled a " + roll + ".");
-
-          if (roll >= 70)
+          if (successOfHunting)
           {
-               Debug.Log("Animal hunting is SUCCEDED.");
-               return createAnimalCarcass();
+               return CreateAnimalCarcass();
           }
           else
           {
-               Debug.Log("Animal hunting is FAILED.");
-               setFleeing();
+               SetFleeing();
                return null;
           }
           
 
      }
-     
-     public void setFleeing()
+
+     public void ModifyRenderingOrder()
+     {
+          if (spritesInitialRenderingOrder == null)
+          {
+               spritesInitialRenderingOrder = new ArrayList();
+               foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer), true))
+               {
+                    spritesInitialRenderingOrder.Add(sprite.sortingOrder);
+               }
+          }
+
+          int i = 0;
+          // Setting render sorting order by finding gameobject's global position;
+          foreach (SpriteRenderer sprite in this.gameObject.GetComponentsInChildren(typeof(SpriteRenderer)))
+          {
+               int localRenderingOrderInSprite = -(int)spritesInitialRenderingOrder[i];
+               sprite.sortingOrder = -(int)(((this.gameObject.transform.position.y) * 100) + localRenderingOrderInSprite);
+               i++;
+          }
+
+     }
+
+
+     public void SetFleeing()
      {
           isFleeing = true;
+          target = animalLeavingPoint.transform.gameObject;
           agent.SetDestination(animalLeavingPoint.transform.position);
      }
      
@@ -100,14 +163,10 @@ public class AnimalScript : MonoBehaviour
           GlobVars.infoPanelGameObject = this.gameObject;
      }
 
-     public string ToString()
+     public override string ToString()
      {
-          return animalName + "\n\tanimal type: " + animalType.ToString() + "\n\tis fleeing: " + isFleeing.ToString();
+          return animalName + "\n\t Is fleeing: " + isFleeing.ToString();
      }
 
-
-     private float calculateDistance(GameObject from, GameObject to)
-     {
-          return Vector3.Distance(from.transform.position, to.transform.position);
-     }
+     
 }

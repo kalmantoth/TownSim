@@ -1,16 +1,9 @@
 fileFormatVersion: 2
-guid: 0953be7045e396e4ca34af5ee2256c6b
+guid: 724e9dd0b97d5a6459d89f5f4b085912
 ScriptedImporter:
-  fileIDToRecycleName:
-    100004: WorkerSelector_GO/WorkerSelector_GO
-    100006: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector
-    400004: WorkerSelector_GO/WorkerSelector_GO/Transform
-    400006: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/Transform
-    2800000: selector
-    21200002: WorkerSelector_GO/WorkerSelector_GO/WorkerSelector/SpriteRenderer
-    21300002: WorkerSelector
-    100100002: WorkerSelector_GO
+  internalIDToNameTable: []
   externalObjects: {}
+  serializedVersion: 2
   userData: 
   assetBundleName: 
   assetBundleVariant: 
@@ -38,7 +31,7 @@ ScriptedImporter:
     spriteMeshType: 1
     alignment: 0
     spritePivot: {x: 0.5, y: 0.5}
-    spritePixelsToUnits: 64
+    spritePixelsToUnits: 100
     spriteBorder: {x: 0, y: 0, z: 0, w: 0}
     spriteGenerateFallbackPhysicsShape: 0
     generateCubemap: 6
@@ -81,6 +74,7 @@ ScriptedImporter:
       width: 0
       height: 0
     spriteID: 
+    internalID: 0
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -92,7 +86,7 @@ ScriptedImporter:
     uvTransform: {x: 0, y: 0}
   mosaicSpriteImportData: []
   rigSpriteImportData:
-  - name: WorkerSelector
+  - name: selector
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -103,7 +97,8 @@ ScriptedImporter:
       y: 4
       width: 33
       height: 12
-    spriteID: aa28c25002723cb49a224718723c97ed
+    spriteID: ca88d2b528ed99a4288f2d690d4d0420
+    internalID: 0
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -113,7 +108,18 @@ ScriptedImporter:
     tessellationDetail: 0
     parentGroupIndex: -1
     uvTransform: {x: -12, y: 1}
-  platformSettings: []
+  platformSettings:
+  - name: Default
+    overridden: 1
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    androidETC2FallbackOverride: 0
   mosaicLayers: 1
   documentPivot: {x: 0, y: 0}
   documentAlignment: 7
@@ -121,6 +127,9 @@ ScriptedImporter:
   importedTextureWidth: 64
   importedTextureHeight: 32
   documentSize: {x: 64, y: 64}
+  paperDollMode: 0
+  spriteCategoryList:
+    categories: []
   textureActualWidth: 64
   textureActualHeight: 32
   spritePackingTag: 
@@ -128,16 +137,20 @@ ScriptedImporter:
   characterMode: 1
   mosaicPSDLayers: []
   rigPSDLayers:
-  - name: WorkerSelector
-    spriteName: WorkerSelector
+  - name: selector
+    spriteName: selector
     isGroup: 0
     parentIndex: -1
-    spriteID: aa28c25002723cb49a224718723c97ed
+    spriteID: ca88d2b528ed99a4288f2d690d4d0420
     layerID: 4
     mosaicPosition: {x: 4, y: 4}
   characterData:
     bones: []
     parts: []
     dimension: {x: 0, y: 0}
+    characterGroups: []
   boneGOs: []
   generateGOHierarchy: 0
+  textureAssetName: selector
+  prefabAssetName: selector_GO
+  spriteLibAssetName: 

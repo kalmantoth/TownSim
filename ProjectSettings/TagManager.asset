@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Object
+  - WaterBlock
   layers:
   - Default
   - TransparentFX
